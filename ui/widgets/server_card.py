@@ -26,19 +26,27 @@ class ServerCard(Static):
 
     def render(self) -> str:
         r = self.result
-        url_line = f"\n  [dim]{escape(self.server_url)}[/]" if self.server_url else ""
+        parts: list[str] = []
 
         if r is None:
-            return f"[bold cyan]{self.server_name}[/]  [dim]waiting...[/]{url_line}"
+            parts.append(f"[bold cyan]{self.server_name}[/]  [dim]waiting...[/]")
+            if self.server_url:
+                parts.append(f"  [dim]{escape(self.server_url)}[/]")
+            return "\n".join(parts)
 
         error = r.get("error")
         metrics = r.get("metrics", [])
 
         if error and not metrics:
-            return f"[bold red]\u25cf[/] [bold]{self.server_name}[/]  [red]{error}[/]{url_line}"
+            parts.append(f"[bold red]\u25cf[/] [bold]{self.server_name}[/]  [red]{error}[/]")
+            if self.server_url:
+                parts.append(f"  [dim]{escape(self.server_url)}[/]")
+            return "\n".join(parts)
 
         # Header
-        parts: list[str] = [f"[bold green]\u25cf[/] [bold]{self.server_name}[/]{url_line}"]
+        parts.append(f"[bold green]\u25cf[/] [bold]{self.server_name}[/]")
+        if self.server_url:
+            parts.append(f"  [dim]{escape(self.server_url)}[/]")
 
         if error:
             parts[0] += f"  [yellow]{error}[/]"
@@ -50,4 +58,4 @@ class ServerCard(Static):
         return "\n".join(parts)
 
     def watch_result(self, new_val: dict | None) -> None:
-        self.refresh()
+        self.refresh(layout=True)
