@@ -92,6 +92,8 @@ def load_config(path: Path) -> list[BaseCollector]:
 _state: dict[str, dict] = {}
 _collectors: list[BaseCollector] = []
 _tasks: list[asyncio.Task] = []
+_start_time: float = time.time()
+_total_polls: int = 0
 
 
 async def _poll_loop(collector: BaseCollector) -> None:
@@ -101,6 +103,8 @@ async def _poll_loop(collector: BaseCollector) -> None:
             result = await collector.collect()
         except Exception as exc:
             result = {"metrics": [], "error": str(exc)}
+        global _total_polls
+        _total_polls += 1
         _state[collector.name] = {
             "name": collector.name,
             "url": collector.url,
@@ -134,6 +138,52 @@ async def api_status():
     """Return latest snapshot of all monitored servers."""
     servers = list(_state.values())
     return JSONResponse({"servers": servers, "timestamp": time.time()})
+
+
+@app.get("/metrics")
+async def metrics():
+    """Self-monitoring endpoint — METRICS_SPEC.md format."""
+    servers = list(_state.values())
+    healthy = sum(1 for s in servers if s.get("metrics") and not s.get("error"))
+    errored = sum(1 for s in servers if s.get("error"))
+    uptime = int(time.time() - _start_time)
+
+    return JSONResponse({
+        "metrics": [
+            {
+                "key": "servers_monitored",
+                "label": "Servers Monitored",
+                "value": len(_collectors),
+                "unit": "count",
+            },
+            {
+                "key": "servers_healthy",
+                "label": "Servers Healthy",
+                "value": healthy,
+                "unit": "count",
+                "color": "green",
+            },
+            {
+                "key": "servers_errored",
+                "label": "Servers Errored",
+                "value": errored,
+                "unit": "count",
+                "warn_above": 0,
+            },
+            {
+                "key": "uptime",
+                "label": "Uptime",
+                "value": uptime,
+                "unit": "s",
+            },
+            {
+                "key": "total_polls",
+                "label": "Total Polls",
+                "value": _total_polls,
+                "unit": "count",
+            },
+        ]
+    })
 
 
 # Serve static files (index.html) at root

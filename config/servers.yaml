@@ -13,6 +13,11 @@ servers:
     metrics_endpoint: "http://127.0.0.1:9800/api/v1/metrics"
     poll_every: 30
 
+  - name: "Server Monitor"
+    type: http
+    metrics_endpoint: "http://127.0.0.1:9860/metrics"
+    poll_every: 10
+
   # -- Standard services (native protocol) --
 
   - name: "Redis"
