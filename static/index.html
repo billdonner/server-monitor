@@ -1,93 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Server Monitor</title>
 <style>
+  /* ── Theme variables (matches Textual dark/light) ── */
   :root {
     --cols: 2;
-    --bg: #1a1a2e;
-    --card-bg: #16213e;
-    --card-border: #0f3460;
+  }
+  [data-theme="dark"] {
+    --bg: #1e1e1e;
+    --surface: #121212;
+    --panel: #282828;
+    --card-border: #004578;
+    --card-border-dim: #333;
     --text: #e0e0e0;
-    --dim: #666;
-    --green: #00e676;
-    --red: #ff5252;
-    --yellow: #ffd740;
-    --cyan: #18ffff;
-    --magenta: #ea80fc;
-    --blue: #448aff;
+    --text-bold: #fff;
+    --dim: #6f6f6f;
+    --primary: #004578;
+    --accent: #0178d4;
+    --green: #3bc55b;
+    --red: #e24c5e;
+    --yellow: #e2c252;
+    --cyan: #24c8db;
+    --magenta: #c87adb;
+    --blue: #4488ff;
     --white: #e0e0e0;
+    --header-bg: #0178d4;
+    --header-text: #fff;
+    --footer-bg: #282828;
+    --footer-text: #e0e0e0;
+    --footer-key-bg: #e0e0e0;
+    --footer-key-text: #282828;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f5;
+    --surface: #fff;
+    --panel: #fff;
+    --card-border: #0178d4;
+    --card-border-dim: #ccc;
+    --text: #1e1e1e;
+    --text-bold: #000;
+    --dim: #888;
+    --primary: #0178d4;
+    --accent: #004578;
+    --green: #1a8a35;
+    --red: #c22535;
+    --yellow: #a88b15;
+    --cyan: #0c8a96;
+    --magenta: #9530a8;
+    --blue: #2060cc;
+    --white: #1e1e1e;
+    --header-bg: #0178d4;
+    --header-text: #fff;
+    --footer-bg: #e8e8e8;
+    --footer-text: #333;
+    --footer-key-bg: #333;
+    --footer-key-text: #e8e8e8;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* -- Toolbar -- */
+  /* ── Header (matches Textual Header with clock) ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 20px;
+    background: var(--header-bg);
+    color: var(--header-text);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 36px;
+  }
+  .header .clock {
+    font-weight: 400;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  /* ── Toolbar ── */
   .toolbar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    background: #0f0f23;
-    border-bottom: 1px solid var(--card-border);
+    gap: 10px;
+    padding: 8px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--card-border-dim);
+    flex-wrap: wrap;
   }
-  .toolbar h1 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--cyan);
-    margin-right: auto;
+  .toolbar .group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+  .toolbar .group-label {
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 2px;
+  }
+  .toolbar .spacer { flex: 1; }
   .toolbar button {
-    background: var(--card-bg);
+    background: var(--panel);
     color: var(--text);
-    border: 1px solid var(--card-border);
-    padding: 6px 14px;
+    border: 1px solid var(--card-border-dim);
+    padding: 4px 12px;
     border-radius: 4px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .toolbar button:hover { background: #1a2a50; }
+  .toolbar button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
   .toolbar button.active {
-    background: #0f3460;
-    border-color: var(--cyan);
-    color: var(--cyan);
+    background: var(--primary);
+    border-color: var(--accent);
+    color: var(--header-text);
+  }
+  .toolbar button.refresh-btn {
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .toolbar button.refresh-btn:hover {
+    background: var(--green);
+    color: var(--surface);
   }
   .toolbar .status {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--dim);
   }
 
-  /* -- Grid -- */
+  /* ── Grid ── */
   .grid {
     display: grid;
     grid-template-columns: repeat(var(--cols), 1fr);
-    gap: 16px;
-    padding: 20px;
+    gap: 12px 16px;
+    padding: 16px 20px;
+    flex: 1;
   }
 
-  /* -- Card -- */
+  /* ── Card (matches Textual ServerCard: border round $primary, bg $panel) ── */
   .card {
-    background: var(--card-bg);
+    background: var(--panel);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    min-height: 120px;
+    border-radius: 12px;
+    padding: 14px 18px;
+    min-height: 100px;
+    transition: border-color 0.2s;
+  }
+  .card:hover {
+    border-color: var(--accent);
   }
   .card-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .dot {
     width: 10px;
@@ -96,22 +179,29 @@
     flex-shrink: 0;
   }
   .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot-red { background: var(--red); box-shadow: 0 0 6px var(--red); }
-  .dot-dim { background: var(--dim); }
+  .dot-red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  .dot-dim   { background: var(--dim);   opacity: 0.5; }
   .card-name {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
+    color: var(--text-bold);
   }
   .card-error {
     color: var(--red);
-    font-size: 13px;
-    margin-left: 8px;
+    font-size: 12px;
+    margin-left: 4px;
   }
   .card-url {
     color: var(--dim);
-    font-size: 12px;
-    margin-bottom: 10px;
+    font-size: 11px;
+    margin-bottom: 8px;
     padding-left: 18px;
+  }
+  .card-poll {
+    color: var(--dim);
+    font-size: 10px;
+    margin-left: auto;
+    white-space: nowrap;
   }
   .card-waiting {
     color: var(--dim);
@@ -119,12 +209,12 @@
     font-style: italic;
   }
 
-  /* -- Metric rows -- */
+  /* ── Metric rows ── */
   .metric {
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 3px 0;
+    padding: 2px 0;
     font-size: 13px;
   }
   .metric-label {
@@ -133,7 +223,7 @@
     flex-shrink: 0;
   }
   .metric-value {
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
   }
   .metric-spark {
@@ -142,7 +232,41 @@
     letter-spacing: 1px;
   }
 
-  /* Responsive: force 1 col on narrow screens */
+  /* ── Footer (matches Textual Footer: key badges + descriptions) ── */
+  .footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 5px 20px;
+    background: var(--footer-bg);
+    border-top: 1px solid var(--card-border-dim);
+    font-size: 12px;
+    color: var(--footer-text);
+    flex-wrap: wrap;
+  }
+  .footer .binding {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .footer kbd {
+    display: inline-block;
+    background: var(--footer-key-bg);
+    color: var(--footer-key-text);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+  }
+  .footer .binding-label {
+    color: var(--dim);
+    font-size: 11px;
+  }
+
+  /* ── Responsive ── */
   @media (max-width: 600px) {
     .grid { grid-template-columns: 1fr !important; }
   }
@@ -150,15 +274,42 @@
 </head>
 <body>
 
+<!-- Header (matches Textual Header with clock) -->
+<div class="header">
+  <span>Server Monitor</span>
+  <span class="clock" id="clock"></span>
+</div>
+
+<!-- Toolbar -->
 <div class="toolbar">
-  <h1>Server Monitor</h1>
-  <button data-cols="1">1 col</button>
-  <button data-cols="2" class="active">2 cols</button>
-  <button data-cols="3">3 cols</button>
+  <div class="group">
+    <span class="group-label">Columns</span>
+    <button data-cols="1">1</button>
+    <button data-cols="2" class="active">2</button>
+    <button data-cols="3">3</button>
+  </div>
+  <div class="group">
+    <span class="group-label">Theme</span>
+    <button id="theme-toggle">Light</button>
+  </div>
+  <div class="group">
+    <button class="refresh-btn" id="refresh-btn">Refresh</button>
+  </div>
+  <div class="spacer"></div>
   <span class="status" id="last-update"></span>
 </div>
 
+<!-- Server cards -->
 <div class="grid" id="grid"></div>
+
+<!-- Footer (matches Textual Footer: keybinding badges) -->
+<div class="footer">
+  <div class="binding"><kbd>R</kbd> <span class="binding-label">Refresh Now</span></div>
+  <div class="binding"><kbd>1</kbd> <span class="binding-label">1 Column</span></div>
+  <div class="binding"><kbd>2</kbd> <span class="binding-label">2 Columns</span></div>
+  <div class="binding"><kbd>3</kbd> <span class="binding-label">3 Columns</span></div>
+  <div class="binding"><kbd>T</kbd> <span class="binding-label">Toggle Theme</span></div>
+</div>
 
 <script>
 (function () {
@@ -170,8 +321,38 @@
 
   const grid = document.getElementById("grid");
   const lastUpdateEl = document.getElementById("last-update");
+  const clockEl = document.getElementById("clock");
+  const themeBtn = document.getElementById("theme-toggle");
+  const refreshBtn = document.getElementById("refresh-btn");
 
-  // -- Column selection -------------------------------------------------------
+  // ── Clock (matches Textual Header show_clock=True) ──────────────────────
+
+  function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString("en-US", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── Theme toggle ────────────────────────────────────────────────────────
+
+  const savedTheme = localStorage.getItem("sm-theme") || "dark";
+  setTheme(savedTheme);
+
+  themeBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    setTheme(current === "dark" ? "light" : "dark");
+  });
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("sm-theme", theme);
+    themeBtn.textContent = theme === "dark" ? "Light" : "Dark";
+  }
+
+  // ── Column selection ────────────────────────────────────────────────────
 
   const savedCols = localStorage.getItem("sm-cols") || "2";
   setCols(savedCols);
@@ -188,7 +369,28 @@
     });
   }
 
-  // -- Rendering helpers (ported from metric_row.py) --------------------------
+  // ── Keyboard shortcuts (matches Textual BINDINGS) ───────────────────────
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    switch (e.key.toLowerCase()) {
+      case "r": poll(); break;
+      case "1": setCols("1"); break;
+      case "2": setCols("2"); break;
+      case "3": setCols("3"); break;
+      case "t": {
+        const cur = document.documentElement.getAttribute("data-theme");
+        setTheme(cur === "dark" ? "light" : "dark");
+        break;
+      }
+    }
+  });
+
+  // ── Refresh button ──────────────────────────────────────────────────────
+
+  refreshBtn.addEventListener("click", () => poll());
+
+  // ── Rendering helpers (ported from metric_row.py) ───────────────────────
 
   function sparkline(values) {
     if (!values || values.length === 0) return "";
@@ -227,19 +429,20 @@
     return div.innerHTML;
   }
 
-  // -- Card rendering ---------------------------------------------------------
+  // ── Card rendering (matches ServerCard render states) ────────────────────
 
   function renderCard(srv) {
     const card = document.createElement("div");
     card.className = "card";
 
-    // No data yet
+    // State 1: waiting (no data yet)
     if (srv.metrics == null && srv.error == null) {
       card.innerHTML = `
         <div class="card-header">
           <span class="dot dot-dim"></span>
           <span class="card-name" style="color:var(--cyan)">${escapeHtml(srv.name)}</span>
           <span class="card-waiting">waiting\u2026</span>
+          ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       `;
@@ -249,23 +452,24 @@
     const hasMetrics = srv.metrics && srv.metrics.length > 0;
     const hasError = !!srv.error;
 
-    // Error with no metrics
+    // State 2: error with no metrics
     if (hasError && !hasMetrics) {
       card.innerHTML = `
         <div class="card-header">
           <span class="dot dot-red"></span>
           <span class="card-name">${escapeHtml(srv.name)}</span>
           <span class="card-error">${escapeHtml(srv.error)}</span>
+          ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       `;
       return card;
     }
 
-    // Healthy (possibly with warning error)
+    // State 3: healthy (possibly with warning)
     let headerExtra = "";
     if (hasError) {
-      headerExtra = `<span style="color:var(--yellow);font-size:13px;margin-left:8px">${escapeHtml(srv.error)}</span>`;
+      headerExtra = `<span style="color:var(--yellow);font-size:12px;margin-left:4px">${escapeHtml(srv.error)}</span>`;
     }
     let metricsHtml = "";
     for (const m of srv.metrics) {
@@ -287,6 +491,7 @@
         <span class="dot dot-green"></span>
         <span class="card-name">${escapeHtml(srv.name)}</span>
         ${headerExtra}
+        ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
       </div>
       ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       ${metricsHtml}
@@ -294,7 +499,7 @@
     return card;
   }
 
-  // -- Polling ----------------------------------------------------------------
+  // ── Polling ──────────────────────────────────────────────────────────────
 
   async function poll() {
     try {
