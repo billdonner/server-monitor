@@ -1,41 +1,26 @@
 # Metrics Endpoint Spec v1.0
 
-Every monitored server exposes `GET /metrics` (or equivalent) returning this JSON shape.
+Every monitored custom server exposes `GET /metrics` returning the JSON format below. This is the contract between your servers and the server-monitor dashboard.
 
 ## Response Format
 
 ```json
 {
-  "server": {
-    "name": "My Server",
-    "version": "1.2.3",
-    "uptime_seconds": 86400
-  },
   "metrics": [
     {
       "key": "requests_per_second",
       "label": "RPS",
       "value": 42.5,
       "unit": "req/s",
-      "type": "gauge",
-      "color": "cyan",
       "warn_above": 1000,
       "warn_below": null,
-      "sparkline": [38, 41, 42, 45, 42]
+      "sparkline_history": [38, 40, 41, 42]
     }
   ]
 }
 ```
 
 ## Fields
-
-### `server` (required)
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | yes | Human-readable server name |
-| `version` | string | no | Server version string |
-| `uptime_seconds` | number | yes | Seconds since server start |
 
 ### `metrics[]` (required, array of metric objects)
 
@@ -44,27 +29,66 @@ Every monitored server exposes `GET /metrics` (or equivalent) returning this JSO
 | `key` | string | yes | Machine-readable identifier (snake_case) |
 | `label` | string | yes | Human-readable display label |
 | `value` | number or string | yes | Current value |
-| `unit` | string | no | Unit suffix for display (e.g. "MB", "req/s", "%", "count") |
-| `type` | string | no | Display hint: `gauge`, `counter`, `percentage`, `table`, `text`. Default: `gauge` |
-| `color` | string | no | Display color: `red`, `green`, `yellow`, `cyan`, `magenta`, `blue`, `white`. Default: auto from warn thresholds |
-| `warn_above` | number | no | Value above which to show warning color |
-| `warn_below` | number | no | Value below which to show warning color |
-| `sparkline` | number[] | no | Recent historical values for mini sparkline chart (newest last, max 60 points) |
-
-## Value Types
-
-- **gauge**: A point-in-time measurement (memory, connections, queue depth)
-- **counter**: A monotonically increasing count (requests served, errors total)
-- **percentage**: A 0-100 value displayed with `%` suffix
-- **table**: `value` is an array of objects displayed as a mini table
-- **text**: `value` is a string displayed as-is
+| `unit` | string | no | Unit suffix for display (e.g. `"MB"`, `"req/s"`, `"%"`, `"count"`) |
+| `warn_above` | number | no | Value above which to show warning (red) color |
+| `warn_below` | number | no | Value below which to show warning (red) color |
+| `sparkline_history` | number[] | no | Recent historical values for mini sparkline chart (newest last, max 60 points) |
 
 ## Color Logic
 
-If `color` is not specified:
-1. If `warn_above` is set and `value > warn_above` -> red
-2. If `warn_below` is set and `value < warn_below` -> red
-3. Otherwise -> green
+Colors are computed automatically from warn thresholds:
+1. If `warn_above` is set and `value > warn_above` -> **red**
+2. If `warn_below` is set and `value < warn_below` -> **red**
+3. Otherwise -> **green**
+
+## Example Payloads
+
+### Scalar metrics (most common)
+
+```json
+{
+  "metrics": [
+    {"key": "uptime", "label": "Uptime", "value": 86400, "unit": "seconds"},
+    {"key": "memory_rss", "label": "Memory (RSS)", "value": 128.5, "unit": "MB", "warn_above": 512},
+    {"key": "rps", "label": "Requests/sec", "value": 42.5, "unit": "req/s", "sparkline_history": [38, 40, 41, 42]}
+  ]
+}
+```
+
+### Multi-field with thresholds
+
+```json
+{
+  "metrics": [
+    {"key": "open_tasks", "label": "Open Tasks", "value": 42, "unit": "tasks", "warn_above": 100},
+    {"key": "error_rate", "label": "Error Rate", "value": 0.02, "unit": "%", "warn_above": 5},
+    {"key": "cache_hit_rate", "label": "Cache Hit Rate", "value": 99.7, "unit": "%", "warn_below": 95},
+    {"key": "queue_depth", "label": "Queue Depth", "value": 0, "unit": "jobs"}
+  ]
+}
+```
+
+### Text and status values
+
+```json
+{
+  "metrics": [
+    {"key": "daemon_state", "label": "State", "value": "running"},
+    {"key": "role", "label": "Role", "value": "primary"},
+    {"key": "version", "label": "Version", "value": "2.1.0"}
+  ]
+}
+```
+
+### Error response
+
+When a server can't gather metrics, return an empty array:
+
+```json
+{
+  "metrics": []
+}
+```
 
 ## Built-in Collectors (no /metrics endpoint needed)
 
@@ -72,50 +96,69 @@ For standard services, the dashboard polls natively:
 
 | Service | Connection | Metrics Source |
 |---------|-----------|----------------|
-| Redis | `redis://host:port` | `INFO` command (parsed by redis-py) |
-| PostgreSQL | `postgresql://...` | `pg_stat_*` system views + custom YAML queries |
-
-## Custom Server Integration
-
-Drop a `/metrics` endpoint in your server conforming to this spec. Example for FastAPI:
-
-```python
-@router.get("/metrics")
-async def metrics():
-    return {
-        "server": {"name": "My App", "uptime_seconds": int(time.time() - START)},
-        "metrics": [
-            {"key": "active_users", "label": "Active Users", "value": 42, "unit": "count"},
-        ]
-    }
-```
+| Redis | `host` + `port` | `INFO` command (parsed by redis-py) |
+| PostgreSQL | `dsn` string | `pg_stat_*` system views + custom YAML queries |
 
 ## Dashboard YAML Config
 
 ```yaml
 servers:
-  - name: "Trivia Engine"
+  - name: "My API"
     type: http
-    url: "http://127.0.0.1:9847/metrics"
-    poll_every: 5
-
-  - name: "Nagzerver"
-    type: http
-    url: "http://127.0.0.1:9800/api/v1/metrics"
+    metrics_endpoint: "http://host:port/metrics"
     poll_every: 5
 
   - name: "Redis"
     type: redis
-    url: "redis://localhost:6379"
+    host: "localhost"
+    port: 6379
     poll_every: 10
 
-  - name: "Postgres (Nagz)"
+  - name: "Postgres"
     type: postgres
-    dsn: "postgresql://nagz:nagz@localhost:5433/nagz"
+    dsn: "postgresql://user:pass@host/db"
+    system_stats: true
     poll_every: 15
     queries:
-      - label: "Open Nags"
-        sql: "SELECT COUNT(*) as value FROM nags WHERE status = 'open'"
+      - label: "Pending Jobs"
+        sql: "SELECT COUNT(*) as value FROM jobs WHERE status = 'pending'"
         color: yellow
         warn_above: 100
+        poll_every: 30
+```
+
+## Adding a /metrics Endpoint to Your Server
+
+### FastAPI
+
+```python
+import os, time, psutil
+from fastapi import APIRouter
+
+router = APIRouter()
+_start = time.time()
+
+@router.get("/metrics")
+async def metrics():
+    proc = psutil.Process(os.getpid())
+    return {
+        "metrics": [
+            {"key": "uptime", "label": "Uptime", "value": int(time.time() - _start), "unit": "seconds"},
+            {"key": "memory_rss", "label": "Memory", "value": round(proc.memory_info().rss / 1048576, 1), "unit": "MB"},
+            # add your app-specific metrics here
+        ]
+    }
+```
+
+### Swift (NIO)
+
+Add a case to your HTTP handler's route switch:
+
+```swift
+case (.GET, "/metrics"):
+    let metrics: [[String: Any]] = [
+        ["key": "uptime", "label": "Uptime", "value": uptimeSeconds, "unit": "seconds"],
+        ["key": "questions", "label": "Questions", "value": questionCount, "unit": "count"],
+    ]
+    return (200, ["metrics": metrics])
 ```

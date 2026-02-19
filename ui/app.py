@@ -6,7 +6,7 @@ import asyncio
 
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
-from textual.widgets import Header, Footer, Static
+from textual.widgets import Header, Footer
 
 from collectors.base import BaseCollector
 from ui.widgets.server_card import ServerCard
@@ -28,14 +28,6 @@ class DashboardApp(App):
         background: $panel;
         border: round $primary;
         width: 100%;
-    }
-    #title-bar {
-        dock: top;
-        height: 1;
-        background: $accent;
-        color: $text;
-        text-align: center;
-        text-style: bold;
     }
     """
 
@@ -60,13 +52,11 @@ class DashboardApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Start a polling loop for each collector."""
         for collector in self.collectors:
             task = asyncio.create_task(self._poll_loop(collector))
             self._tasks.append(task)
 
     async def _poll_loop(self, collector: BaseCollector) -> None:
-        """Continuously poll a collector and update its card."""
         card = self._cards[collector.name]
         while True:
             result = await collector.collect()
@@ -74,7 +64,6 @@ class DashboardApp(App):
             await asyncio.sleep(collector.poll_every)
 
     def action_refresh(self) -> None:
-        """Force an immediate refresh of all collectors."""
         for collector in self.collectors:
             asyncio.create_task(self._poll_once(collector))
 

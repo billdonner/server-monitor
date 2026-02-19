@@ -32,10 +32,23 @@ def load_config(path: Path) -> list[BaseCollector]:
         poll = srv.get("poll_every", 5)
 
         if stype == "http":
-            collectors.append(HttpCollector(name=name, url=srv["url"], poll_every=poll))
+            collectors.append(
+                HttpCollector(
+                    name=name,
+                    metrics_endpoint=srv["metrics_endpoint"],
+                    poll_every=poll,
+                )
+            )
 
         elif stype == "redis":
-            collectors.append(RedisCollector(name=name, url=srv["url"], poll_every=poll))
+            collectors.append(
+                RedisCollector(
+                    name=name,
+                    host=srv.get("host", "localhost"),
+                    port=srv.get("port", 6379),
+                    poll_every=poll,
+                )
+            )
 
         elif stype == "postgres":
             queries = [
@@ -45,11 +58,18 @@ def load_config(path: Path) -> list[BaseCollector]:
                     color=q.get("color"),
                     warn_above=q.get("warn_above"),
                     warn_below=q.get("warn_below"),
+                    poll_every=q.get("poll_every", poll),
                 )
                 for q in srv.get("queries", [])
             ]
             collectors.append(
-                PostgresCollector(name=name, dsn=srv["dsn"], poll_every=poll, queries=queries)
+                PostgresCollector(
+                    name=name,
+                    dsn=srv["dsn"],
+                    poll_every=poll,
+                    system_stats=srv.get("system_stats", True),
+                    queries=queries,
+                )
             )
         else:
             print(f"Warning: unknown server type '{stype}' for '{name}', skipping")

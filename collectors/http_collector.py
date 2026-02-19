@@ -4,58 +4,26 @@ from __future__ import annotations
 
 import httpx
 
-from .base import BaseCollector, CollectorResult, MetricItem, ServerInfo
+from .base import BaseCollector
 
 
 class HttpCollector(BaseCollector):
-    def __init__(self, name: str, url: str, poll_every: int = 5) -> None:
+    def __init__(self, name: str, metrics_endpoint: str, poll_every: int = 5) -> None:
         super().__init__(name, poll_every)
-        self.url = url
+        self.metrics_endpoint = metrics_endpoint
 
-    async def collect(self) -> CollectorResult:
+    async def collect(self) -> dict:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(self.url)
+                resp = await client.get(self.metrics_endpoint)
                 resp.raise_for_status()
                 data = resp.json()
 
-            # Parse server info
-            srv = data.get("server", {})
-            server = ServerInfo(
-                name=srv.get("name", self.name),
-                version=srv.get("version", ""),
-                uptime_seconds=srv.get("uptime_seconds", 0),
-            )
-
-            # Parse metrics array
-            metrics: list[MetricItem] = []
-            for m in data.get("metrics", []):
-                metrics.append(
-                    MetricItem(
-                        key=m.get("key", ""),
-                        label=m.get("label", m.get("key", "")),
-                        value=m.get("value", 0),
-                        unit=m.get("unit", ""),
-                        color=m.get("color"),
-                        warn_above=m.get("warn_above"),
-                        warn_below=m.get("warn_below"),
-                        sparkline=m.get("sparkline", m.get("sparkline_history", [])) or [],
-                    )
-                )
-
-            return CollectorResult(server=server, metrics=metrics)
+            # Normalize: ensure metrics key exists
+            metrics = data.get("metrics", [])
+            return {"metrics": metrics}
 
         except httpx.ConnectError:
-            return CollectorResult(
-                server=ServerInfo(name=self.name),
-                metrics=[],
-                error="Connection refused",
-                reachable=False,
-            )
+            return {"metrics": [], "error": "Connection refused"}
         except Exception as e:
-            return CollectorResult(
-                server=ServerInfo(name=self.name),
-                metrics=[],
-                error=str(e),
-                reachable=False,
-            )
+            return {"metrics": [], "error": str(e)}

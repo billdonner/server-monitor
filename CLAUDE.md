@@ -14,34 +14,41 @@ Flicker-free terminal dashboard for monitoring heterogeneous servers.
 ## Architecture
 
 ```
-config/servers.yaml     ← declarative server definitions
+config/servers.yaml     <- declarative server definitions
 collectors/
-  base.py               ← BaseCollector ABC + data types
-  http_collector.py     ← for custom servers (METRICS_SPEC.md format)
-  redis_collector.py    ← native INFO command
-  postgres_collector.py ← pg_stat_* views + custom YAML queries
+  base.py               <- BaseCollector ABC: async def collect() -> dict
+  http_collector.py     <- for custom servers (METRICS_SPEC.md format)
+  redis_collector.py    <- native INFO command via host/port
+  postgres_collector.py <- pg_stat_* views + custom YAML queries with per-query poll_every
 ui/
-  app.py                ← Textual App with reactive polling
+  app.py                <- Textual App with reactive polling loops per collector
   widgets/
-    server_card.py      ← one card per server, differential rendering
-monitor.py              ← entrypoint, loads config, wires everything
-METRICS_SPEC.md         ← contract for custom server /metrics endpoints
+    server_card.py      <- one card per server, differential rendering via reactive
+    metric_row.py       <- renders label, value, unit, color-coded warn state, sparkline
+monitor.py              <- entrypoint, loads YAML config, wires collectors to UI
+METRICS_SPEC.md         <- JSON contract for custom server /metrics endpoints
 ```
 
-## Adding a Custom Server
+## Collector Contract
 
-1. Add a `/metrics` endpoint to your server (see METRICS_SPEC.md)
-2. Add an entry to `config/servers.yaml`
-3. Restart the dashboard
+All collectors return `dict` matching `{"metrics": [...]}`:
 
-## Monitored Servers
+```python
+async def collect(self) -> dict:
+    return {
+        "metrics": [
+            {"key": "rps", "label": "Requests/sec", "value": 42, "unit": "req/s"}
+        ]
+    }
+```
 
-| Server | Type | URL | Poll |
-|--------|------|-----|------|
-| Alities Engine | http | localhost:9847/metrics | 5s |
-| Nagzerver | http | localhost:9800/api/v1/metrics | 5s |
-| Redis | redis | localhost:6379 | 10s |
-| Postgres (Nagz) | postgres | localhost:5433/nagz | 15s |
+On failure: `{"metrics": [], "error": "reason"}`.
+
+## YAML Config Keys
+
+- HTTP: `metrics_endpoint` (URL string)
+- Redis: `host` + `port` (separate fields)
+- Postgres: `dsn` + `system_stats` (bool) + `queries[]` with per-query `poll_every`
 
 ## Permissions
 - ALL Bash commands pre-approved
