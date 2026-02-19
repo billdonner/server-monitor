@@ -9,7 +9,7 @@ from .base import BaseCollector
 
 class HttpCollector(BaseCollector):
     def __init__(self, name: str, metrics_endpoint: str, poll_every: int = 5) -> None:
-        super().__init__(name, poll_every)
+        super().__init__(name, poll_every, url=metrics_endpoint)
         self.metrics_endpoint = metrics_endpoint
 
     async def collect(self) -> dict:

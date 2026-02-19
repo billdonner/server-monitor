@@ -29,7 +29,7 @@ class PostgresCollector(BaseCollector):
         system_stats: bool = True,
         queries: list[CustomQuery] | None = None,
     ) -> None:
-        super().__init__(name, poll_every)
+        super().__init__(name, poll_every, url=dsn)
         self.dsn = dsn
         self.system_stats = system_stats
         self.queries = queries or []

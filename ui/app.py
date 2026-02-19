@@ -48,7 +48,7 @@ class DashboardApp(App):
         with VerticalScroll():
             for c in self.collectors:
                 safe_id = re.sub(r'[^a-z0-9_-]', '', c.name.lower().replace(' ', '-'))
-                card = ServerCard(c.name, id=f"card-{safe_id}")
+                card = ServerCard(c.name, url=c.url, id=f"card-{safe_id}")
                 self._cards[c.name] = card
                 yield card
         yield Footer()

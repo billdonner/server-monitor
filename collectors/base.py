@@ -19,9 +19,10 @@ class BaseCollector(ABC):
     On failure, return ``{"metrics": [], "error": "reason"}``.
     """
 
-    def __init__(self, name: str, poll_every: int = 5) -> None:
+    def __init__(self, name: str, poll_every: int = 5, url: str = "") -> None:
         self.name = name
         self.poll_every = poll_every
+        self.url = url
 
     @abstractmethod
     async def collect(self) -> dict:

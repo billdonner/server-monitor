@@ -9,7 +9,7 @@ from .base import BaseCollector
 
 class RedisCollector(BaseCollector):
     def __init__(self, name: str, host: str = "localhost", port: int = 6379, poll_every: int = 10) -> None:
-        super().__init__(name, poll_every)
+        super().__init__(name, poll_every, url=f"{host}:{port}")
         self.host = host
         self.port = port
 

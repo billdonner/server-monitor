@@ -17,23 +17,26 @@ class ServerCard(Static):
 
     result: reactive[dict | None] = reactive(None)
 
-    def __init__(self, server_name: str, **kwargs) -> None:
+    def __init__(self, server_name: str, url: str = "", **kwargs) -> None:
         super().__init__(**kwargs)
         self.server_name = server_name
+        self.server_url = url
 
     def render(self) -> str:
         r = self.result
+        url_suffix = f"  [dim]{self.server_url}[/]" if self.server_url else ""
+
         if r is None:
-            return f"[bold cyan]{self.server_name}[/]  [dim]waiting...[/]"
+            return f"[bold cyan]{self.server_name}[/]{url_suffix}  [dim]waiting...[/]"
 
         error = r.get("error")
         metrics = r.get("metrics", [])
 
         if error and not metrics:
-            return f"[bold red]\u25cf[/] [bold]{self.server_name}[/]  [red]{error}[/]"
+            return f"[bold red]\u25cf[/] [bold]{self.server_name}[/]{url_suffix}  [red]{error}[/]"
 
         # Header
-        parts: list[str] = [f"[bold green]\u25cf[/] [bold]{self.server_name}[/]"]
+        parts: list[str] = [f"[bold green]\u25cf[/] [bold]{self.server_name}[/]{url_suffix}"]
 
         if error:
             parts[0] += f"  [yellow]{error}[/]"
