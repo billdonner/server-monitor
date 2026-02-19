@@ -64,4 +64,4 @@ def render_metric_row(metric: dict) -> str:
     unit_str = f" {unit}" if unit else ""
     spark_str = f" [dim]{sparkline(spark_values)}[/]" if spark_values else ""
 
-    return f"  [dim]{label:<24}[/] [{color}]{display}{unit_str}[/]{spark_str}"
+    return f"  [dim]{label:<18}[/] [{color}]{display}{unit_str}[/]{spark_str}"

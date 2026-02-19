@@ -21,26 +21,26 @@ class RedisCollector(BaseCollector):
         except Exception as e:
             return {"metrics": [], "error": str(e)}
 
+        # Compute hit rate
+        hits = info.get("keyspace_hits", 0)
+        misses = info.get("keyspace_misses", 0)
+        total = hits + misses
+        hit_rate = round(hits / total * 100, 1) if total > 0 else None
+
         metrics = [
             {
                 "key": "connected_clients",
-                "label": "Connected Clients",
+                "label": "Clients",
                 "value": info.get("connected_clients", 0),
                 "unit": "clients",
                 "warn_above": 100,
             },
             {
                 "key": "used_memory_mb",
-                "label": "Memory Used",
+                "label": "Memory",
                 "value": round(info.get("used_memory", 0) / 1_048_576, 1),
                 "unit": "MB",
                 "warn_above": 512,
-            },
-            {
-                "key": "used_memory_peak_mb",
-                "label": "Memory Peak",
-                "value": round(info.get("used_memory_peak", 0) / 1_048_576, 1),
-                "unit": "MB",
             },
             {
                 "key": "ops_per_sec",
@@ -48,35 +48,13 @@ class RedisCollector(BaseCollector):
                 "value": info.get("instantaneous_ops_per_sec", 0),
                 "unit": "ops/s",
             },
-            {
-                "key": "total_connections",
-                "label": "Total Connections",
-                "value": info.get("total_connections_received", 0),
-                "unit": "count",
-            },
-            {
-                "key": "keyspace_hits",
-                "label": "Keyspace Hits",
-                "value": info.get("keyspace_hits", 0),
-                "unit": "count",
-            },
-            {
-                "key": "keyspace_misses",
-                "label": "Keyspace Misses",
-                "value": info.get("keyspace_misses", 0),
-                "unit": "count",
-            },
         ]
 
-        # Compute hit rate
-        hits = info.get("keyspace_hits", 0)
-        misses = info.get("keyspace_misses", 0)
-        total = hits + misses
-        if total > 0:
+        if hit_rate is not None:
             metrics.append({
                 "key": "hit_rate",
                 "label": "Hit Rate",
-                "value": round(hits / total * 100, 1),
+                "value": hit_rate,
                 "unit": "%",
                 "warn_below": 90,
             })

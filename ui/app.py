@@ -6,7 +6,7 @@ import asyncio
 import re
 
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import Grid
 from textual.widgets import Header, Footer
 
 from collectors.base import BaseCollector
@@ -20,15 +20,19 @@ class DashboardApp(App):
     Screen {
         background: $surface;
     }
-    VerticalScroll {
+    #dashboard-grid {
+        grid-size: 2 2;
+        grid-gutter: 1 2;
         padding: 1 2;
+        width: 1fr;
+        height: 1fr;
     }
     ServerCard {
-        margin-bottom: 1;
         padding: 1 2;
         background: $panel;
         border: round $primary;
-        width: 100%;
+        width: 1fr;
+        height: 1fr;
     }
     """
 
@@ -45,7 +49,7 @@ class DashboardApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with VerticalScroll():
+        with Grid(id="dashboard-grid"):
             for c in self.collectors:
                 safe_id = re.sub(r'[^a-z0-9_-]', '', c.name.lower().replace(' ', '-'))
                 card = ServerCard(c.name, url=c.url, id=f"card-{safe_id}")
