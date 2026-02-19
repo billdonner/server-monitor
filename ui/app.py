@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
@@ -46,7 +47,8 @@ class DashboardApp(App):
         yield Header(show_clock=True)
         with VerticalScroll():
             for c in self.collectors:
-                card = ServerCard(c.name, id=f"card-{c.name.lower().replace(' ', '-')}")
+                safe_id = re.sub(r'[^a-z0-9_-]', '', c.name.lower().replace(' ', '-'))
+                card = ServerCard(c.name, id=f"card-{safe_id}")
                 self._cards[c.name] = card
                 yield card
         yield Footer()
