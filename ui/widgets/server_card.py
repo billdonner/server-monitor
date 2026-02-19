@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from rich.markup import escape
+
 from textual.reactive import reactive
 from textual.widgets import Static
 
@@ -24,19 +26,19 @@ class ServerCard(Static):
 
     def render(self) -> str:
         r = self.result
-        url_suffix = f"  [dim]{self.server_url}[/]" if self.server_url else ""
+        url_line = f"\n  [dim]{escape(self.server_url)}[/]" if self.server_url else ""
 
         if r is None:
-            return f"[bold cyan]{self.server_name}[/]{url_suffix}  [dim]waiting...[/]"
+            return f"[bold cyan]{self.server_name}[/]  [dim]waiting...[/]{url_line}"
 
         error = r.get("error")
         metrics = r.get("metrics", [])
 
         if error and not metrics:
-            return f"[bold red]\u25cf[/] [bold]{self.server_name}[/]{url_suffix}  [red]{error}[/]"
+            return f"[bold red]\u25cf[/] [bold]{self.server_name}[/]  [red]{error}[/]{url_line}"
 
         # Header
-        parts: list[str] = [f"[bold green]\u25cf[/] [bold]{self.server_name}[/]{url_suffix}"]
+        parts: list[str] = [f"[bold green]\u25cf[/] [bold]{self.server_name}[/]{url_line}"]
 
         if error:
             parts[0] += f"  [yellow]{error}[/]"
