@@ -38,8 +38,8 @@ servers:
         warn_above: 100
         poll_every: 30
 
-      - label: "Failed Deliveries (1h)"
-        sql: "SELECT COUNT(*) as value FROM deliveries WHERE status = 'failed' AND created_at > NOW() - INTERVAL '1 hour'"
+      - label: "Failed Deliveries"
+        sql: "SELECT COUNT(*) as value FROM deliveries WHERE status = 'failed'"
         color: red
         warn_above: 10
         poll_every: 60
