@@ -13,8 +13,10 @@ Flicker-free terminal dashboard for monitoring heterogeneous servers (HTTP, Redi
 
 | Command | Description |
 |---------|-------------|
-| `uv run python monitor.py` | Launch dashboard (default config) |
-| `uv run python monitor.py -c path/to/servers.yaml` | Launch with custom config |
+| `uv run python monitor.py` | Launch terminal dashboard (default config) |
+| `uv run python monitor.py -c path/to/servers.yaml` | Launch terminal with custom config |
+| `uv run python web.py` | Launch web dashboard on port 9860 |
+| `uv run python web.py -c path/to/servers.yaml --port 8080` | Web dashboard with custom config/port |
 | `uv sync` | Install/update dependencies |
 
 ## Architecture
@@ -31,7 +33,10 @@ ui/
   widgets/
     server_card.py      <- one card per server, 3 render states (waiting/error/ok)
     metric_row.py       <- renders label (18-char), value, unit, warn color, sparkline
-monitor.py              <- entrypoint, loads YAML config, wires collectors to UI
+static/
+  index.html            <- self-contained web frontend (HTML + CSS + JS, no build step)
+monitor.py              <- TUI entrypoint, loads YAML config, wires collectors to Textual
+web.py                  <- Web entrypoint, FastAPI + uvicorn, serves API + static frontend
 METRICS_SPEC.md         <- JSON contract for custom server /metrics endpoints
 ```
 
@@ -66,6 +71,15 @@ On failure: `{"metrics": [], "error": "reason"}`. Must never raise.
 - **Compact metrics** — 18-char labels to fit half-width cards in grid layout
 - **Per-query caching** — Postgres custom queries have independent `poll_every` with in-memory TTL cache
 - **Graceful degradation** — connection failures show red dot + error, never crash
+
+## Web Dashboard
+
+- Port **9860** (registered in alities port registry)
+- FastAPI backend reuses same collectors and config as TUI
+- Single `GET /api/status` endpoint returns all server snapshots as JSON
+- Self-contained `static/index.html` — no npm, no build step
+- Dark theme matching terminal version, selectable 1/2/3 column grid layout
+- Frontend polls `/api/status` every 3 seconds
 
 ## Cross-Project Integration
 
