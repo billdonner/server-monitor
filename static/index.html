@@ -266,6 +266,79 @@
     font-size: 11px;
   }
 
+  /* ── Command Palette (matches Textual Ctrl+P) ── */
+  .palette-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 80px;
+  }
+  .palette-overlay.open { display: flex; }
+  .palette {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    width: min(480px, 90vw);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .palette-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface);
+    color: var(--text);
+    border: none;
+    border-bottom: 1px solid var(--card-border-dim);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .palette-input::placeholder { color: var(--dim); }
+  .palette-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .palette-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s;
+  }
+  .palette-item:hover,
+  .palette-item.selected {
+    background: var(--primary);
+    color: var(--header-text);
+  }
+  .palette-item .pi-key {
+    display: inline-block;
+    background: var(--footer-key-bg);
+    color: var(--footer-key-text);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .palette-item.selected .pi-key {
+    background: var(--header-text);
+    color: var(--primary);
+  }
+  .palette-item .pi-label { flex: 1; }
+  .palette-item .pi-desc {
+    color: var(--dim);
+    font-size: 11px;
+  }
+  .palette-item.selected .pi-desc { color: rgba(255,255,255,0.7); }
+
   /* ── Responsive ── */
   @media (max-width: 600px) {
     .grid { grid-template-columns: 1fr !important; }
@@ -302,8 +375,18 @@
 <!-- Server cards -->
 <div class="grid" id="grid"></div>
 
+<!-- Command palette overlay (matches Textual Ctrl+P) -->
+<div class="palette-overlay" id="palette-overlay">
+  <div class="palette" id="palette">
+    <input class="palette-input" id="palette-input" type="text"
+           placeholder="Type a command..." autocomplete="off" spellcheck="false">
+    <div class="palette-list" id="palette-list"></div>
+  </div>
+</div>
+
 <!-- Footer (matches Textual Footer: keybinding badges) -->
 <div class="footer">
+  <div class="binding"><kbd>^P</kbd> <span class="binding-label">Command Palette</span></div>
   <div class="binding"><kbd>R</kbd> <span class="binding-label">Refresh Now</span></div>
   <div class="binding"><kbd>1</kbd> <span class="binding-label">1 Column</span></div>
   <div class="binding"><kbd>2</kbd> <span class="binding-label">2 Columns</span></div>
@@ -369,9 +452,103 @@
     });
   }
 
+  // ── Command Palette (matches Textual Ctrl+P) ─────────────────────────────
+
+  const paletteOverlay = document.getElementById("palette-overlay");
+  const paletteInput = document.getElementById("palette-input");
+  const paletteList = document.getElementById("palette-list");
+  let paletteSelected = 0;
+
+  const COMMANDS = [
+    { key: "R",  label: "Refresh Now",       desc: "Poll all servers immediately",  action: () => poll() },
+    { key: "1",  label: "1 Column Layout",   desc: "Single column grid",            action: () => setCols("1") },
+    { key: "2",  label: "2 Column Layout",   desc: "Two column grid",               action: () => setCols("2") },
+    { key: "3",  label: "3 Column Layout",   desc: "Three column grid",             action: () => setCols("3") },
+    { key: "T",  label: "Toggle Theme",      desc: "Switch between dark and light",
+      action: () => { const c = document.documentElement.getAttribute("data-theme"); setTheme(c === "dark" ? "light" : "dark"); }
+    },
+  ];
+
+  function openPalette() {
+    paletteOverlay.classList.add("open");
+    paletteInput.value = "";
+    paletteSelected = 0;
+    renderPalette("");
+    paletteInput.focus();
+  }
+
+  function closePalette() {
+    paletteOverlay.classList.remove("open");
+    paletteInput.blur();
+  }
+
+  function filteredCommands(query) {
+    if (!query) return COMMANDS;
+    const q = query.toLowerCase();
+    return COMMANDS.filter(c =>
+      c.label.toLowerCase().includes(q) ||
+      c.desc.toLowerCase().includes(q) ||
+      c.key.toLowerCase() === q
+    );
+  }
+
+  function renderPalette(query) {
+    const items = filteredCommands(query);
+    if (paletteSelected >= items.length) paletteSelected = Math.max(0, items.length - 1);
+    paletteList.innerHTML = items.map((c, i) => `
+      <div class="palette-item${i === paletteSelected ? " selected" : ""}" data-idx="${i}">
+        <span class="pi-key">${c.key}</span>
+        <span class="pi-label">${c.label}</span>
+        <span class="pi-desc">${c.desc}</span>
+      </div>
+    `).join("");
+    // Click handler
+    paletteList.querySelectorAll(".palette-item").forEach(el => {
+      el.addEventListener("click", () => {
+        const idx = parseInt(el.dataset.idx);
+        const cmd = items[idx];
+        if (cmd) { closePalette(); cmd.action(); }
+      });
+    });
+  }
+
+  paletteInput.addEventListener("input", () => {
+    paletteSelected = 0;
+    renderPalette(paletteInput.value);
+  });
+
+  paletteInput.addEventListener("keydown", (e) => {
+    const items = filteredCommands(paletteInput.value);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      paletteSelected = Math.min(paletteSelected + 1, items.length - 1);
+      renderPalette(paletteInput.value);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      paletteSelected = Math.max(paletteSelected - 1, 0);
+      renderPalette(paletteInput.value);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const cmd = items[paletteSelected];
+      if (cmd) { closePalette(); cmd.action(); }
+    } else if (e.key === "Escape") {
+      closePalette();
+    }
+  });
+
+  paletteOverlay.addEventListener("click", (e) => {
+    if (e.target === paletteOverlay) closePalette();
+  });
+
   // ── Keyboard shortcuts (matches Textual BINDINGS) ───────────────────────
 
   document.addEventListener("keydown", (e) => {
+    // Ctrl+P opens palette
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      openPalette();
+      return;
+    }
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     switch (e.key.toLowerCase()) {
       case "r": poll(); break;
