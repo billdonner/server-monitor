@@ -1,0 +1,37 @@
+# Server Monitor — Dashboard Configuration
+# Each entry defines a server to monitor.
+
+servers:
+  # -- Custom servers (HTTP /metrics endpoint) --
+
+  - name: "Alities Engine"
+    type: http
+    url: "http://127.0.0.1:9847/metrics"
+    poll_every: 5
+
+  - name: "Nagzerver"
+    type: http
+    url: "http://127.0.0.1:9800/api/v1/metrics"
+    poll_every: 5
+
+  # -- Standard services (native protocol) --
+
+  - name: "Redis"
+    type: redis
+    url: "redis://localhost:6379"
+    poll_every: 10
+
+  - name: "Postgres (Nagz)"
+    type: postgres
+    dsn: "postgresql://nagz:nagz@localhost:5433/nagz"
+    poll_every: 15
+    queries:
+      - label: "Open Nags"
+        sql: "SELECT COUNT(*) as value FROM nags WHERE status = 'open'"
+        color: yellow
+        warn_above: 100
+
+      - label: "Failed Deliveries (1h)"
+        sql: "SELECT COUNT(*) as value FROM deliveries WHERE status = 'failed' AND created_at > NOW() - INTERVAL '1 hour'"
+        color: red
+        warn_above: 10
