@@ -197,11 +197,20 @@
     margin-bottom: 8px;
     padding-left: 18px;
   }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
   .card-poll {
     color: var(--dim);
     font-size: 10px;
-    margin-left: auto;
-    white-space: nowrap;
+  }
+  .card-updated {
+    color: var(--dim);
+    font-size: 10px;
   }
   .card-waiting {
     color: var(--dim);
@@ -368,8 +377,6 @@
   <div class="group">
     <button class="refresh-btn" id="refresh-btn">Refresh</button>
   </div>
-  <div class="spacer"></div>
-  <span class="status" id="last-update"></span>
 </div>
 
 <!-- Server cards -->
@@ -403,7 +410,6 @@
   const VALID_COLORS = new Set(["red", "green", "yellow", "cyan", "magenta", "blue", "white"]);
 
   const grid = document.getElementById("grid");
-  const lastUpdateEl = document.getElementById("last-update");
   const clockEl = document.getElementById("clock");
   const themeBtn = document.getElementById("theme-toggle");
   const refreshBtn = document.getElementById("refresh-btn");
@@ -606,6 +612,20 @@
     return div.innerHTML;
   }
 
+  function formatUpdated(epoch) {
+    if (!epoch) return "";
+    const d = new Date(epoch * 1000);
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  function cardMeta(srv) {
+    const parts = [];
+    if (srv.last_updated) parts.push(`<span class="card-updated">${formatUpdated(srv.last_updated)}</span>`);
+    if (srv.poll_every) parts.push(`<span class="card-poll">${srv.poll_every}s</span>`);
+    if (parts.length === 0) return "";
+    return `<span class="card-meta">${parts.join("")}</span>`;
+  }
+
   // ── Card rendering (matches ServerCard render states) ────────────────────
 
   function renderCard(srv) {
@@ -619,7 +639,7 @@
           <span class="dot dot-dim"></span>
           <span class="card-name" style="color:var(--cyan)">${escapeHtml(srv.name)}</span>
           <span class="card-waiting">waiting\u2026</span>
-          ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
+          ${cardMeta(srv)}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       `;
@@ -636,7 +656,7 @@
           <span class="dot dot-red"></span>
           <span class="card-name">${escapeHtml(srv.name)}</span>
           <span class="card-error">${escapeHtml(srv.error)}</span>
-          ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
+          ${cardMeta(srv)}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       `;
@@ -668,7 +688,7 @@
         <span class="dot dot-green"></span>
         <span class="card-name">${escapeHtml(srv.name)}</span>
         ${headerExtra}
-        ${srv.poll_every ? `<span class="card-poll">${srv.poll_every}s</span>` : ""}
+        ${cardMeta(srv)}
       </div>
       ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
       ${metricsHtml}
@@ -692,11 +712,8 @@
       if (data.servers.length === 0) {
         grid.innerHTML = '<div style="color:var(--dim);padding:40px;text-align:center">No servers configured.</div>';
       }
-
-      const now = new Date();
-      lastUpdateEl.textContent = `Updated ${now.toLocaleTimeString()}`;
     } catch (err) {
-      lastUpdateEl.textContent = `Error: ${err.message}`;
+      console.error("Poll error:", err.message);
     }
   }
 
