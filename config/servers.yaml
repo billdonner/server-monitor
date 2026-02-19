@@ -6,12 +6,12 @@ servers:
   - name: "Alities Engine"
     type: http
     metrics_endpoint: "http://127.0.0.1:9847/metrics"
-    poll_every: 5
+    poll_every: 15
 
   - name: "Nagzerver"
     type: http
     metrics_endpoint: "http://127.0.0.1:9800/api/v1/metrics"
-    poll_every: 5
+    poll_every: 30
 
   # -- Standard services (native protocol) --
 
