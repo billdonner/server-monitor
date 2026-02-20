@@ -166,6 +166,11 @@
   .card:hover {
     border-color: var(--accent);
   }
+  .card.card-error-border {
+    border-color: var(--red);
+    border-width: 2px;
+    box-shadow: 0 0 8px rgba(226, 76, 94, 0.3);
+  }
   .card-header {
     display: flex;
     align-items: center;
@@ -651,6 +656,7 @@
 
     // State 2: error with no metrics
     if (hasError && !hasMetrics) {
+      card.classList.add("card-error-border");
       card.innerHTML = `
         <div class="card-header">
           <span class="dot dot-red"></span>
@@ -666,6 +672,7 @@
     // State 3: healthy (possibly with warning)
     let headerExtra = "";
     if (hasError) {
+      card.classList.add("card-error-border");
       headerExtra = `<span style="color:var(--yellow);font-size:12px;margin-left:4px">${escapeHtml(srv.error)}</span>`;
     }
     let metricsHtml = "";
