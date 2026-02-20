@@ -161,10 +161,11 @@
   /* ── Grid ── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(var(--cols), 1fr);
+    grid-template-columns: repeat(var(--cols), minmax(0, 420px));
     gap: 12px 16px;
     padding: 16px 20px;
     flex: 1;
+    justify-content: center;
   }
 
   /* ── Card (matches Textual ServerCard: border round $primary, bg $panel) ── */
