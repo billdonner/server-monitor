@@ -63,11 +63,15 @@ class DashboardApp(App):
     ServerCard.error-state {
         border: heavy red;
     }
+    .hidden {
+        display: none;
+    }
     """
 
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh Now"),
+        ("m", "toggle_mini", "Mini Player"),
     ]
 
     def __init__(self, collectors: list[BaseCollector]) -> None:
@@ -76,6 +80,7 @@ class DashboardApp(App):
         self._cards: dict[str, ServerCard] = {}
         self._tasks: list[asyncio.Task] = []
         self._status_bar: StatusBar | None = None
+        self._mini_mode: bool = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -127,6 +132,14 @@ class DashboardApp(App):
             card.result = result
             self._update_status_bar()
             await asyncio.sleep(collector.poll_every)
+
+    def action_toggle_mini(self) -> None:
+        """Toggle between mini (status bar only) and full dashboard."""
+        self._mini_mode = not self._mini_mode
+        grid = self.query_one("#dashboard-grid")
+        header = self.query_one("Header")
+        grid.set_class(self._mini_mode, "hidden")
+        header.set_class(self._mini_mode, "hidden")
 
     def action_refresh(self) -> None:
         for collector in self.collectors:

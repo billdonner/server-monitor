@@ -366,6 +366,28 @@
   }
   .palette-item.selected .pi-desc { color: rgba(255,255,255,0.7); }
 
+  /* ── Mini Player ── */
+  body.mini-mode .toolbar,
+  body.mini-mode .grid,
+  body.mini-mode .footer,
+  body.mini-mode .palette-overlay {
+    display: none !important;
+  }
+  body.mini-mode {
+    min-height: 0;
+    background: transparent;
+  }
+  body.mini-mode .header {
+    border-radius: 10px;
+    margin: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    user-select: none;
+  }
+  body.mini-mode .header:hover {
+    filter: brightness(1.1);
+  }
+
   /* ── Responsive ── */
   @media (max-width: 600px) {
     .grid { grid-template-columns: 1fr !important; }
@@ -417,6 +439,7 @@
   <div class="binding"><kbd>2</kbd> <span class="binding-label">2 Columns</span></div>
   <div class="binding"><kbd>3</kbd> <span class="binding-label">3 Columns</span></div>
   <div class="binding"><kbd>T</kbd> <span class="binding-label">Toggle Theme</span></div>
+  <div class="binding"><kbd>M</kbd> <span class="binding-label">Mini Player</span></div>
 </div>
 
 <script>
@@ -434,6 +457,27 @@
   const headerEl = document.getElementById("header");
   const headerTitle = document.getElementById("header-title");
   const headerDetail = document.getElementById("header-detail");
+
+  // ── Mini Player mode ─────────────────────────────────────────────────────
+
+  let miniMode = new URLSearchParams(window.location.search).has("mini")
+                 || localStorage.getItem("sm-mini") === "true";
+
+  function setMiniMode(on) {
+    miniMode = on;
+    document.body.classList.toggle("mini-mode", on);
+    localStorage.setItem("sm-mini", on ? "true" : "false");
+  }
+
+  setMiniMode(miniMode);
+
+  headerEl.addEventListener("click", () => {
+    if (miniMode) setMiniMode(false);
+  });
+
+  function toggleMini() {
+    setMiniMode(!miniMode);
+  }
 
   // ── Clock (matches Textual Header show_clock=True) ──────────────────────
 
@@ -494,6 +538,7 @@
     { key: "T",  label: "Toggle Theme",      desc: "Switch between dark and light",
       action: () => { const c = document.documentElement.getAttribute("data-theme"); setTheme(c === "dark" ? "light" : "dark"); }
     },
+    { key: "M",  label: "Mini Player",      desc: "Toggle compact status-only view", action: () => toggleMini() },
   ];
 
   function openPalette() {
@@ -579,6 +624,7 @@
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     switch (e.key.toLowerCase()) {
       case "r": poll(); break;
+      case "m": toggleMini(); break;
       case "1": setCols("1"); break;
       case "2": setCols("2"); break;
       case "3": setCols("3"); break;
