@@ -2,6 +2,11 @@
 
 Flicker-free terminal dashboard for monitoring heterogeneous servers (HTTP, Redis, PostgreSQL) in a 2x2 grid layout.
 
+**Three frontends share the same backend:**
+- Terminal TUI (`monitor.py`) — Textual framework
+- Web dashboard (`web.py`) — FastAPI + static HTML on port 9860
+- iOS app (`~/server-monitor-ios`) — SwiftUI + WidgetKit
+
 ## Stack
 
 - Python 3.12+, [Textual](https://textual.textualize.io/) (TUI framework)
@@ -62,6 +67,13 @@ On failure: `{"metrics": [], "error": "reason"}`. Must never raise.
 | HTTP | `metrics_endpoint` (URL) | `poll_every` |
 | Redis | — | `host`, `port`, `poll_every` |
 | Postgres | `dsn` | `system_stats`, `queries[]` with per-query `poll_every` |
+
+## Error Highlighting
+
+All three frontends highlight unreachable servers with red borders:
+- **Web**: 2px red border + red glow (`card-error-border` class)
+- **Terminal**: `heavy red` border via `error-state` CSS class
+- **iOS**: 2pt red stroke + shadow overlay on `ServerCardView`
 
 ## Key Design Decisions
 
