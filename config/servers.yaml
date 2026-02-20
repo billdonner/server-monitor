@@ -6,16 +6,19 @@ servers:
   - name: "Alities Engine"
     type: http
     metrics_endpoint: "http://127.0.0.1:9847/metrics"
+    web_url: "https://bd-alities-engine.fly.dev"
     poll_every: 15
 
   - name: "Nagzerver"
     type: http
     metrics_endpoint: "http://127.0.0.1:9800/api/v1/metrics"
+    web_url: "https://bd-nagzerver.fly.dev"
     poll_every: 30
 
   - name: "Server Monitor"
     type: http
     metrics_endpoint: "http://127.0.0.1:9860/metrics"
+    web_url: "https://bd-server-monitor.fly.dev"
     poll_every: 10
 
   # -- Standard services (native protocol) --
@@ -47,4 +50,5 @@ servers:
   - name: "OBO Server"
     type: http
     metrics_endpoint: "http://127.0.0.1:9810/metrics"
+    web_url: "https://bd-obo-server.fly.dev"
     poll_every: 15

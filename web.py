@@ -42,6 +42,9 @@ def load_config(path: Path) -> list[BaseCollector]:
         stype = srv.get("type", "http")
         poll = srv.get("poll_every", 5)
 
+        if srv.get("web_url"):
+            _web_urls[name] = srv["web_url"]
+
         if stype == "http":
             collectors.append(
                 HttpCollector(
@@ -92,6 +95,7 @@ def load_config(path: Path) -> list[BaseCollector]:
 
 _state: dict[str, dict] = {}
 _collectors: list[BaseCollector] = []
+_web_urls: dict[str, str] = {}   # server name → web app URL
 _tasks: list[asyncio.Task] = []
 _start_time: float = time.time()
 _total_polls: int = 0
@@ -124,6 +128,7 @@ async def _poll_loop(collector: BaseCollector) -> None:
         _state[collector.name] = {
             "name": collector.name,
             "url": collector.url,
+            "web_url": _web_urls.get(collector.name),
             "poll_every": collector.poll_every,
             "last_updated": time.time(),
             "metrics": result.get("metrics", []),

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server Monitor - Help</title>
+<style>
+  [data-theme="dark"] {
+    --bg: #1e1e1e;
+    --surface: #282828;
+    --text: #e0e0e0;
+    --text-bold: #fff;
+    --dim: #6f6f6f;
+    --accent: #0178d4;
+    --green: #3bc55b;
+    --red: #e24c5e;
+    --yellow: #e2c252;
+    --cyan: #24c8db;
+    --header-bg: #0178d4;
+    --header-text: #fff;
+    --border: #333;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f5;
+    --surface: #fff;
+    --text: #1e1e1e;
+    --text-bold: #000;
+    --dim: #888;
+    --accent: #004578;
+    --green: #1a8a35;
+    --red: #c22535;
+    --yellow: #a88b15;
+    --cyan: #0c8a96;
+    --header-bg: #0178d4;
+    --header-text: #fff;
+    --border: #ccc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .header a {
+    color: var(--header-text);
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .header a:hover { opacity: 1; text-decoration: underline; }
+
+  .content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  h2 {
+    color: var(--text-bold);
+    font-size: 20px;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+
+  h2:first-child { margin-top: 0; }
+
+  h3 {
+    color: var(--text-bold);
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+  }
+
+  ul, ol {
+    margin-bottom: 12px;
+    padding-left: 24px;
+  }
+
+  li { margin-bottom: 6px; }
+
+  kbd {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+
+  th {
+    background: var(--surface);
+    color: var(--text-bold);
+    font-weight: 600;
+  }
+
+  .dot-demo {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+
+  .dot-green { background: var(--green); box-shadow: 0 0 4px var(--green); }
+  .dot-red { background: var(--red); box-shadow: 0 0 4px var(--red); }
+  .dot-dim { background: var(--dim); opacity: 0.5; }
+
+  .sparkline-demo {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    font-size: 13px;
+  }
+
+  .note {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Server Monitor Help</h1>
+  <a href="/">&larr; Back to Dashboard</a>
+</div>
+
+<div class="content">
+
+<h2>Overview</h2>
+<p>
+  Server Monitor is a real-time dashboard that tracks the health of all services
+  in the infrastructure. It polls each server at regular intervals and displays
+  live metrics, status indicators, and sparkline charts.
+</p>
+
+<h2>Reading the Dashboard</h2>
+
+<h3>Status Banner</h3>
+<p>
+  The colored banner at the top shows overall health at a glance:
+</p>
+<ul>
+  <li><strong style="color:var(--green)">Green</strong> &mdash; All systems healthy</li>
+  <li><strong style="color:var(--red)">Red</strong> &mdash; One or more servers down (names listed in the banner)</li>
+  <li><strong style="color:var(--accent)">Blue</strong> &mdash; Initial loading state</li>
+</ul>
+
+<h3>Server Cards</h3>
+<p>Each server gets its own card showing:</p>
+<ul>
+  <li><strong>Status dot</strong> &mdash;
+    <span class="dot-demo dot-green"></span> healthy,
+    <span class="dot-demo dot-red"></span> error,
+    <span class="dot-demo dot-dim"></span> waiting for first poll
+  </li>
+  <li><strong>Server name</strong> &mdash; bold text at the top</li>
+  <li><strong>Metrics endpoint</strong> &mdash; dimmed URL showing where metrics are polled from</li>
+  <li><strong>Web app link</strong> &mdash; clickable link to the server's web interface (if it has one)</li>
+  <li><strong>Last updated time</strong> and <strong>poll interval</strong> in the top-right corner</li>
+  <li><strong>Metric rows</strong> &mdash; each row shows a label, color-coded value, and sparkline chart</li>
+</ul>
+
+<h3>Metric Colors</h3>
+<table>
+  <tr><th>Color</th><th>Meaning</th></tr>
+  <tr><td style="color:var(--green)">Green</td><td>Value is within normal range</td></tr>
+  <tr><td style="color:var(--red)">Red</td><td>Value exceeds a warning threshold</td></tr>
+  <tr><td style="color:var(--yellow)">Yellow</td><td>Informational / custom highlight</td></tr>
+</table>
+
+<h3>Sparklines</h3>
+<p>
+  The mini charts <span class="sparkline-demo">&#9601;&#9602;&#9603;&#9604;&#9605;&#9606;&#9607;&#9608;</span>
+  at the end of each metric row show the last 20 values as a visual trend.
+  Rising patterns mean the value is increasing; flat lines mean stability.
+</p>
+
+<h2>Controls</h2>
+
+<h3>Toolbar</h3>
+<table>
+  <tr><th>Button</th><th>Action</th></tr>
+  <tr><td><strong>1 / 2 / 3</strong></td><td>Switch between 1, 2, or 3 column layouts</td></tr>
+  <tr><td><strong>Light / Dark</strong></td><td>Toggle between light and dark themes</td></tr>
+  <tr><td><strong>Refresh</strong></td><td>Immediately poll all servers</td></tr>
+</table>
+
+<h3>Keyboard Shortcuts</h3>
+<table>
+  <tr><th>Key</th><th>Action</th></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Open command palette</td></tr>
+  <tr><td><kbd>R</kbd></td><td>Refresh all servers now</td></tr>
+  <tr><td><kbd>1</kbd></td><td>1-column layout</td></tr>
+  <tr><td><kbd>2</kbd></td><td>2-column layout</td></tr>
+  <tr><td><kbd>3</kbd></td><td>3-column layout</td></tr>
+  <tr><td><kbd>T</kbd></td><td>Toggle dark/light theme</td></tr>
+  <tr><td><kbd>M</kbd></td><td>Mini player mode</td></tr>
+</table>
+
+<h3>Command Palette</h3>
+<p>
+  Press <kbd>Ctrl</kbd>+<kbd>P</kbd> to open the command palette. Type to filter
+  commands, use arrow keys to navigate, and press Enter to execute. Press
+  <kbd>Esc</kbd> to close.
+</p>
+
+<h3>Mini Player</h3>
+<p>
+  Press <kbd>M</kbd> to open a compact popup window showing only the status
+  banner. This is useful for keeping a small health indicator visible while
+  working in other apps. Click the mini banner to return to the full dashboard.
+</p>
+
+<h2>Monitored Servers</h2>
+
+<table>
+  <tr><th>Server</th><th>Type</th><th>Poll Interval</th><th>Web App</th></tr>
+  <tr>
+    <td>Alities Engine</td>
+    <td>HTTP</td>
+    <td>15s</td>
+    <td><a href="https://bd-alities-engine.fly.dev" target="_blank" style="color:var(--accent)">bd-alities-engine.fly.dev</a></td>
+  </tr>
+  <tr>
+    <td>Nagzerver</td>
+    <td>HTTP</td>
+    <td>30s</td>
+    <td><a href="https://bd-nagzerver.fly.dev" target="_blank" style="color:var(--accent)">bd-nagzerver.fly.dev</a></td>
+  </tr>
+  <tr>
+    <td>Server Monitor</td>
+    <td>HTTP</td>
+    <td>10s</td>
+    <td><a href="https://bd-server-monitor.fly.dev" target="_blank" style="color:var(--accent)">bd-server-monitor.fly.dev</a></td>
+  </tr>
+  <tr>
+    <td>Redis</td>
+    <td>Native</td>
+    <td>10s</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td>Postgres (Nagz)</td>
+    <td>Native</td>
+    <td>15s</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td>OBO Server</td>
+    <td>HTTP</td>
+    <td>15s</td>
+    <td><a href="https://bd-obo-server.fly.dev" target="_blank" style="color:var(--accent)">bd-obo-server.fly.dev</a></td>
+  </tr>
+</table>
+
+<div class="note">
+  Servers are configured in <code>config/servers.yaml</code>. To add a new server,
+  add an entry with a <code>name</code>, <code>type</code>, and
+  <code>metrics_endpoint</code> (for HTTP) or connection details (for Redis/Postgres).
+</div>
+
+<h2>How Auto-Refresh Works</h2>
+<p>
+  The dashboard polls the <code>/api/status</code> endpoint every 3 seconds to fetch
+  the latest metrics snapshot. Each server has its own independent poll loop on the
+  backend with its own interval (shown in the card's top-right corner). This means
+  metric values update at different rates depending on the server's configured poll
+  interval.
+</p>
+
+<h2>Accessing Remotely</h2>
+<p>
+  When running locally, the dashboard auto-detects your LAN IP address and rewrites
+  <code>127.0.0.1</code> URLs so you can share the dashboard link with others on
+  the same network.
+</p>
+<p>
+  The production deployment is available at
+  <a href="https://bd-server-monitor.fly.dev" style="color:var(--accent)">https://bd-server-monitor.fly.dev</a>.
+</p>
+
+</div>
+
+<script>
+  // Match theme preference from the main dashboard
+  const saved = localStorage.getItem("sm-theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+</script>
+</body>
+</html>

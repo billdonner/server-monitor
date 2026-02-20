@@ -216,6 +216,19 @@
     margin-bottom: 8px;
     padding-left: 18px;
   }
+  .card-web-link {
+    display: inline-block;
+    font-size: 11px;
+    padding-left: 18px;
+    margin-bottom: 6px;
+  }
+  .card-web-link a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .card-web-link a:hover {
+    text-decoration: underline;
+  }
   .card-meta {
     display: flex;
     align-items: center;
@@ -420,6 +433,10 @@
   </div>
   <div class="group">
     <button class="refresh-btn" id="refresh-btn">Refresh</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <a href="/help.html" style="color:var(--accent);font-size:12px;text-decoration:none;">Help</a>
   </div>
 </div>
 
@@ -718,6 +735,11 @@
 
   // ── Card rendering (matches ServerCard render states) ────────────────────
 
+  function webLinkHtml(srv) {
+    if (!srv.web_url) return "";
+    return `<div class="card-web-link"><a href="${escapeHtml(srv.web_url)}" target="_blank">${escapeHtml(srv.web_url)}</a></div>`;
+  }
+
   function renderCard(srv) {
     const card = document.createElement("div");
     card.className = "card";
@@ -732,6 +754,7 @@
           ${cardMeta(srv)}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
+        ${webLinkHtml(srv)}
       `;
       return card;
     }
@@ -750,6 +773,7 @@
           ${cardMeta(srv)}
         </div>
         ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
+        ${webLinkHtml(srv)}
       `;
       return card;
     }
@@ -783,6 +807,7 @@
         ${cardMeta(srv)}
       </div>
       ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
+      ${webLinkHtml(srv)}
       ${metricsHtml}
     `;
     return card;
