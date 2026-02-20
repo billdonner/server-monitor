@@ -44,25 +44,7 @@ servers:
         warn_above: 10
         poll_every: 60
 
-  - name: "OBO Decks"
-    type: postgres
-    dsn: "postgresql://nagz:nagz@localhost:5433/obo"
-    system_stats: false
-    poll_every: 30
-    queries:
-      - label: "Total Decks"
-        sql: "SELECT COUNT(*) as value FROM decks"
-        poll_every: 30
-
-      - label: "Total Cards"
-        sql: "SELECT COUNT(*) as value FROM cards"
-        poll_every: 30
-
-      - label: "Recent (7d)"
-        sql: "SELECT COUNT(*) as value FROM decks WHERE created_at > NOW() - INTERVAL '7 days'"
-        color: cyan
-        poll_every: 60
-
-      - label: "Avg Cards/Deck"
-        sql: "SELECT COALESCE(ROUND(AVG(card_count))::integer, 0) as value FROM decks"
-        poll_every: 60
+  - name: "OBO Server"
+    type: http
+    metrics_endpoint: "http://127.0.0.1:9810/metrics"
+    poll_every: 15
