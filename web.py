@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import socket
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -96,6 +97,21 @@ _start_time: float = time.time()
 _total_polls: int = 0
 
 
+def _get_lan_ip() -> str:
+    """Best-effort LAN IP detection."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
+_lan_ip: str = _get_lan_ip()
+
+
 async def _poll_loop(collector: BaseCollector) -> None:
     """Background poll loop for a single collector."""
     while True:
@@ -137,7 +153,7 @@ app = FastAPI(title="Server Monitor", lifespan=lifespan)
 async def api_status():
     """Return latest snapshot of all monitored servers."""
     servers = list(_state.values())
-    return JSONResponse({"servers": servers, "timestamp": time.time()})
+    return JSONResponse({"servers": servers, "timestamp": time.time(), "lan_ip": _lan_ip})
 
 
 @app.get("/metrics")

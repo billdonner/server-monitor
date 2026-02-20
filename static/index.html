@@ -654,6 +654,15 @@
 
   refreshBtn.addEventListener("click", () => poll());
 
+  // ── LAN URL rewriting ──────────────────────────────────────────────────
+
+  let lanIP = "";
+
+  function lanUrl(url) {
+    if (!lanIP || !url) return url;
+    return url.replace(/\b127\.0\.0\.1\b/g, lanIP).replace(/\blocalhost\b/g, lanIP);
+  }
+
   // ── Rendering helpers (ported from metric_row.py) ───────────────────────
 
   function sparkline(values) {
@@ -722,7 +731,7 @@
           <span class="card-waiting">waiting\u2026</span>
           ${cardMeta(srv)}
         </div>
-        ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
+        ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
       `;
       return card;
     }
@@ -740,7 +749,7 @@
           <span class="card-error">${escapeHtml(srv.error)}</span>
           ${cardMeta(srv)}
         </div>
-        ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
+        ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
       `;
       return card;
     }
@@ -773,7 +782,7 @@
         ${headerExtra}
         ${cardMeta(srv)}
       </div>
-      ${srv.url ? `<div class="card-url">${escapeHtml(srv.url)}</div>` : ""}
+      ${srv.url ? `<div class="card-url">${escapeHtml(lanUrl(srv.url))}</div>` : ""}
       ${metricsHtml}
     `;
     return card;
@@ -786,6 +795,8 @@
       const resp = await fetch("/api/status");
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+
+      if (data.lan_ip) lanIP = data.lan_ip;
 
       // Update status banner
       const errorServers = data.servers.filter(s => !!s.error);
