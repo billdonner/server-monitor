@@ -71,7 +71,7 @@
     flex-direction: column;
   }
 
-  /* ── Header (matches Textual Header with clock) ── */
+  /* ── Header / Status Banner ── */
   .header {
     display: flex;
     align-items: center;
@@ -82,6 +82,19 @@
     font-size: 14px;
     font-weight: 600;
     min-height: 36px;
+    transition: background 0.4s ease;
+  }
+  .header.status-ok {
+    background: var(--green);
+  }
+  .header.status-error {
+    background: var(--red);
+  }
+  .header .status-detail {
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.95;
+    margin-left: 12px;
   }
   .header .clock {
     font-weight: 400;
@@ -361,9 +374,9 @@
 </head>
 <body>
 
-<!-- Header (matches Textual Header with clock) -->
-<div class="header">
-  <span>Server Monitor</span>
+<!-- Header / Status Banner -->
+<div class="header" id="header">
+  <span><span id="header-title">Server Monitor</span><span class="status-detail" id="header-detail"></span></span>
   <span class="clock" id="clock"></span>
 </div>
 
@@ -418,6 +431,9 @@
   const clockEl = document.getElementById("clock");
   const themeBtn = document.getElementById("theme-toggle");
   const refreshBtn = document.getElementById("refresh-btn");
+  const headerEl = document.getElementById("header");
+  const headerTitle = document.getElementById("header-title");
+  const headerDetail = document.getElementById("header-detail");
 
   // ── Clock (matches Textual Header show_clock=True) ──────────────────────
 
@@ -710,6 +726,26 @@
       const resp = await fetch("/api/status");
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+
+      // Update status banner
+      const errorServers = data.servers.filter(s => !!s.error);
+      const total = data.servers.length;
+      const healthy = total - errorServers.length;
+
+      headerEl.classList.remove("status-ok", "status-error");
+      if (total === 0) {
+        headerTitle.textContent = "Server Monitor";
+        headerDetail.textContent = "";
+      } else if (errorServers.length === 0) {
+        headerEl.classList.add("status-ok");
+        headerTitle.textContent = "All Systems OK";
+        headerDetail.textContent = `${healthy}/${total} servers healthy`;
+      } else {
+        headerEl.classList.add("status-error");
+        const names = errorServers.map(s => s.name).join(", ");
+        headerTitle.textContent = `${errorServers.length} Server${errorServers.length > 1 ? "s" : ""} Down`;
+        headerDetail.textContent = names;
+      }
 
       grid.innerHTML = "";
       for (const srv of data.servers) {
