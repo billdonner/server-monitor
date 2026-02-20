@@ -64,5 +64,5 @@ servers:
         poll_every: 60
 
       - label: "Avg Cards/Deck"
-        sql: "SELECT COALESCE(ROUND(AVG(card_count)), 0) as value FROM decks"
+        sql: "SELECT COALESCE(ROUND(AVG(card_count))::integer, 0) as value FROM decks"
         poll_every: 60
