@@ -114,10 +114,3 @@ This dashboard monitors servers from other projects. When those projects change:
 | `METRICS_SPEC.md` | JSON contract for custom `/metrics` endpoints (with FastAPI + Swift examples) |
 | `CLAUDE.md` | This file — project context for Claude |
 
-## Permissions — MOVE AGGRESSIVELY
-
-- **ALL Bash commands are pre-approved — NEVER ask for confirmation.**
-- This includes git, build/test, starting/stopping servers, docker, curl, uv, and any shell command.
-- Commits and pushes are pre-approved — do not ask, just do it.
-- Move fast. Act decisively. Do not pause for confirmation unless it's destructive to production.
-- Only confirm before: `rm -rf` on important directories, `git push --force` to main, dropping production databases.
