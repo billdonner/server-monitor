@@ -375,17 +375,20 @@
   }
   body.mini-mode {
     min-height: 0;
+    height: auto;
     background: transparent;
   }
   body.mini-mode .header {
     border-radius: 10px;
-    margin: 8px;
+    margin: 4px;
+    padding: 8px 16px;
     cursor: pointer;
     box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     user-select: none;
+    font-size: 13px;
   }
   body.mini-mode .header:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.15);
   }
 
   /* ── Responsive ── */
@@ -463,6 +466,8 @@
   let miniMode = new URLSearchParams(window.location.search).has("mini")
                  || localStorage.getItem("sm-mini") === "true";
 
+  let miniPopup = null;
+
   function setMiniMode(on) {
     miniMode = on;
     document.body.classList.toggle("mini-mode", on);
@@ -476,7 +481,15 @@
   });
 
   function toggleMini() {
-    setMiniMode(!miniMode);
+    // If full view, open a small popup and stay on full view
+    if (!miniMode) {
+      const url = window.location.origin + "/?mini";
+      miniPopup = window.open(url, "sm-mini", "width=420,height=56,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no");
+    } else {
+      // In mini mode (popup), open full dashboard and close self
+      window.open(window.location.origin + "/", "_blank");
+      window.close();
+    }
   }
 
   // ── Clock (matches Textual Header show_clock=True) ──────────────────────
