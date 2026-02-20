@@ -92,6 +92,7 @@ This dashboard monitors servers from other projects. When those projects change:
 | Engine adds new `/metrics` fields | No action — new metrics auto-display |
 | Redis moves to non-default port | Update `config/servers.yaml` redis host/port |
 | Postgres DSN changes | Update `config/servers.yaml` postgres dsn |
+| OBO database schema changes | Update custom queries in `config/servers.yaml` OBO Decks section |
 
 ## Documentation
 
@@ -101,7 +102,10 @@ This dashboard monitors servers from other projects. When those projects change:
 | `METRICS_SPEC.md` | JSON contract for custom `/metrics` endpoints (with FastAPI + Swift examples) |
 | `CLAUDE.md` | This file — project context for Claude |
 
-## Permissions
+## Permissions — MOVE AGGRESSIVELY
 
-- ALL Bash commands pre-approved
-- Commits and pushes pre-approved
+- **ALL Bash commands are pre-approved — NEVER ask for confirmation.**
+- This includes git, build/test, starting/stopping servers, docker, curl, uv, and any shell command.
+- Commits and pushes are pre-approved — do not ask, just do it.
+- Move fast. Act decisively. Do not pause for confirmation unless it's destructive to production.
+- Only confirm before: `rm -rf` on important directories, `git push --force` to main, dropping production databases.
