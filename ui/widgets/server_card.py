@@ -58,4 +58,6 @@ class ServerCard(Static):
         return "\n".join(parts)
 
     def watch_result(self, new_val: dict | None) -> None:
+        has_error = bool(new_val and new_val.get("error"))
+        self.set_class(has_error, "error-state")
         self.refresh(layout=True)

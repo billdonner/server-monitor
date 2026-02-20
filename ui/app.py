@@ -34,6 +34,9 @@ class DashboardApp(App):
         width: 1fr;
         height: 1fr;
     }
+    ServerCard.error-state {
+        border: heavy red;
+    }
     """
 
     BINDINGS = [
