@@ -488,6 +488,14 @@
 
   let miniPopup = null;
 
+  function exitMiniInPlace() {
+    // Strip ?mini from URL so refreshes stay full-size
+    const url = new URL(window.location);
+    url.searchParams.delete("mini");
+    window.history.replaceState({}, "", url.pathname + url.search);
+    setMiniMode(false);
+  }
+
   function setMiniMode(on) {
     miniMode = on;
     document.body.classList.toggle("mini-mode", on);
@@ -496,22 +504,17 @@
   setMiniMode(miniMode);
 
   headerEl.addEventListener("click", () => {
-    if (miniMode) {
-      // Exit mini: open full dashboard and close this popup
-      window.open(window.location.origin + "/", "_blank");
-      window.close();
-    }
+    if (miniMode) exitMiniInPlace();
   });
 
   function toggleMini() {
-    // If full view, open a small popup and stay on full view
     if (!miniMode) {
+      // Full view → open a small popup
       const url = window.location.origin + "/?mini";
       miniPopup = window.open(url, "sm-mini", "width=420,height=56,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no");
     } else {
-      // In mini mode (popup), open full dashboard and close self
-      window.open(window.location.origin + "/", "_blank");
-      window.close();
+      // Mini mode → exit back to full view in this same window
+      exitMiniInPlace();
     }
   }
 
@@ -661,6 +664,7 @@
     switch (e.key.toLowerCase()) {
       case "r": poll(); break;
       case "m": toggleMini(); break;
+      case "escape": if (miniMode) { exitMiniInPlace(); return; } break;
       case "1": setCols("1"); break;
       case "2": setCols("2"); break;
       case "3": setCols("3"); break;
