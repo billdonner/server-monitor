@@ -481,21 +481,26 @@
 
   // ── Mini Player mode ─────────────────────────────────────────────────────
 
-  let miniMode = new URLSearchParams(window.location.search).has("mini")
-                 || localStorage.getItem("sm-mini") === "true";
+  let miniMode = new URLSearchParams(window.location.search).has("mini");
+
+  // Clear any stale localStorage flag from previous versions
+  localStorage.removeItem("sm-mini");
 
   let miniPopup = null;
 
   function setMiniMode(on) {
     miniMode = on;
     document.body.classList.toggle("mini-mode", on);
-    localStorage.setItem("sm-mini", on ? "true" : "false");
   }
 
   setMiniMode(miniMode);
 
   headerEl.addEventListener("click", () => {
-    if (miniMode) setMiniMode(false);
+    if (miniMode) {
+      // Exit mini: open full dashboard and close this popup
+      window.open(window.location.origin + "/", "_blank");
+      window.close();
+    }
   });
 
   function toggleMini() {
