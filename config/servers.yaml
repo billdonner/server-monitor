@@ -52,3 +52,8 @@ servers:
     metrics_endpoint: "http://127.0.0.1:9810/metrics"
     web_url: "https://bd-obo-server.fly.dev"
     poll_every: 15
+
+  - name: "Advice App"
+    type: http
+    metrics_endpoint: "http://127.0.0.1:9820/metrics"
+    poll_every: 15

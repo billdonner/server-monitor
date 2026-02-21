@@ -207,6 +207,14 @@ async def metrics():
     })
 
 
+# Mount advice app sub-application if available
+try:
+    from advice_app.main import create_app as create_advice_app
+    advice = create_advice_app()
+    app.mount("/advice", advice)
+except ImportError:
+    pass  # advice app not installed — skip
+
 # Serve static files (index.html) at root
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(exist_ok=True)
