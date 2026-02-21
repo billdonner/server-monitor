@@ -1,0 +1,16 @@
+{
+  "name": "Server Monitor Mini",
+  "short_name": "Monitor",
+  "description": "Compact server health indicator",
+  "start_url": "/mini.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "/mini-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
