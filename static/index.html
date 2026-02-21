@@ -813,7 +813,18 @@
     return card;
   }
 
-  // ── Polling ──────────────────────────────────────────────────────────────
+  // ── Polling (stable in-place updates — no card reordering) ─────────────
+
+  // Track existing card elements by server name for in-place updates
+  const cardElements = new Map();
+  // Lock the display order after the first successful poll
+  let serverOrder = null;
+
+  function updateCardContent(cardEl, srv) {
+    const fresh = renderCard(srv);
+    cardEl.className = fresh.className;
+    cardEl.innerHTML = fresh.innerHTML;
+  }
 
   async function poll() {
     try {
@@ -843,12 +854,35 @@
         headerDetail.textContent = names;
       }
 
-      grid.innerHTML = "";
+      // Lock the display order on first poll so cards never move
+      if (!serverOrder) {
+        serverOrder = data.servers.map(s => s.name);
+      }
+      // Build lookup of current data by name
+      const dataByName = new Map(data.servers.map(s => [s.name, s]));
+
+      // Add any new servers not yet in the order
       for (const srv of data.servers) {
-        grid.appendChild(renderCard(srv));
+        if (!serverOrder.includes(srv.name)) {
+          serverOrder.push(srv.name);
+        }
       }
 
-      if (data.servers.length === 0) {
+      // Update or create cards in stable order
+      for (const name of serverOrder) {
+        const srv = dataByName.get(name);
+        if (!srv) continue;
+
+        if (cardElements.has(name)) {
+          updateCardContent(cardElements.get(name), srv);
+        } else {
+          const card = renderCard(srv);
+          grid.appendChild(card);
+          cardElements.set(name, card);
+        }
+      }
+
+      if (data.servers.length === 0 && grid.children.length === 0) {
         grid.innerHTML = '<div style="color:var(--dim);padding:40px;text-align:center">No servers configured.</div>';
       }
     } catch (err) {
