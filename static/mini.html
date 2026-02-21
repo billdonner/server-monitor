@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server Monitor — Mini</title>
+<style>
+  /* ── Theme tokens ── */
+  [data-theme="dark"] {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --text: #e0e0e0;
+    --dim: #777;
+    --green: #3bc55b;
+    --red: #e24c5e;
+    --yellow: #e2c252;
+    --accent: #0178d4;
+    --glow-ok: rgba(59, 197, 91, 0.15);
+    --glow-err: rgba(226, 76, 94, 0.15);
+    --border: rgba(255,255,255,0.08);
+  }
+  [data-theme="light"] {
+    --bg: #f0f0f0;
+    --surface: #fff;
+    --text: #222;
+    --dim: #888;
+    --green: #1a8a35;
+    --red: #c22535;
+    --yellow: #a88b15;
+    --accent: #0178d4;
+    --glow-ok: rgba(26, 138, 53, 0.1);
+    --glow-err: rgba(194, 37, 53, 0.1);
+    --border: rgba(0,0,0,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    overflow: hidden;
+    height: auto;
+    min-height: 0;
+    background: transparent;
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  }
+
+  .mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    margin: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    -webkit-app-region: drag;
+  }
+  .mini:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .mini:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Status indicator ── */
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .status-dot.ok {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse-ok 2s ease-in-out infinite;
+  }
+  .status-dot.error {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse-err 1s ease-in-out infinite;
+  }
+  .status-dot.loading {
+    background: var(--dim);
+    opacity: 0.5;
+  }
+  @keyframes pulse-ok {
+    0%, 100% { box-shadow: 0 0 6px var(--green); }
+    50% { box-shadow: 0 0 14px var(--green); }
+  }
+  @keyframes pulse-err {
+    0%, 100% { box-shadow: 0 0 6px var(--red); }
+    50% { box-shadow: 0 0 16px var(--red); }
+  }
+
+  /* ── Status text ── */
+  .status-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .status-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-subtitle {
+    font-size: 10px;
+    color: var(--dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Server dots (individual status) ── */
+  .server-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .srv-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+  }
+  .srv-dot.ok { background: var(--green); }
+  .srv-dot.err { background: var(--red); }
+  .srv-dot.wait { background: var(--dim); opacity: 0.4; }
+  .srv-dot:hover {
+    transform: scale(1.5);
+  }
+
+  /* ── Spacer ── */
+  .spacer { flex: 1; min-width: 8px; }
+
+  /* ── Clock ── */
+  .clock {
+    font-size: 11px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+  }
+
+  /* ── Expand icon ── */
+  .expand-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: var(--dim);
+  }
+  .mini:hover .expand-icon {
+    opacity: 1;
+  }
+
+  /* ── Tooltip ── */
+  .srv-dot {
+    position: relative;
+  }
+  .srv-dot::after {
+    content: attr(data-name);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+  .srv-dot:hover::after {
+    opacity: 1;
+  }
+
+  /* ── Context menu ── */
+  .ctx-menu {
+    display: none;
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 100;
+    min-width: 140px;
+  }
+  .ctx-menu.open { display: block; }
+  .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .ctx-item:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .ctx-key {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--dim);
+    font-family: 'SF Mono', 'Menlo', monospace;
+  }
+  .ctx-item:hover .ctx-key { color: rgba(255,255,255,0.6); }
+</style>
+</head>
+<body>
+
+<div class="mini" id="mini">
+  <span class="status-dot loading" id="dot"></span>
+  <div class="status-text">
+    <span class="status-title" id="title">Server Monitor</span>
+    <span class="status-subtitle" id="subtitle">connecting...</span>
+  </div>
+  <div class="server-dots" id="dots"></div>
+  <span class="spacer"></span>
+  <span class="clock" id="clock"></span>
+  <svg class="expand-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M9 2h5v5M7 14H2V9M14 2L9 7M2 14l5-5"/>
+  </svg>
+</div>
+
+<!-- Right-click menu -->
+<div class="ctx-menu" id="ctx">
+  <div class="ctx-item" data-action="dashboard">Open Dashboard <span class="ctx-key">Enter</span></div>
+  <div class="ctx-item" data-action="theme">Toggle Theme <span class="ctx-key">T</span></div>
+  <div class="ctx-item" data-action="refresh">Refresh Now <span class="ctx-key">R</span></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const POLL_MS = 3000;
+
+  const mini = document.getElementById("mini");
+  const dot = document.getElementById("dot");
+  const title = document.getElementById("title");
+  const subtitle = document.getElementById("subtitle");
+  const dotsEl = document.getElementById("dots");
+  const clockEl = document.getElementById("clock");
+  const ctx = document.getElementById("ctx");
+
+  // ── Theme ──────────────────────────────────────────────────────────────
+
+  const savedTheme = localStorage.getItem("sm-theme") || "dark";
+  setTheme(savedTheme);
+
+  function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("sm-theme", t);
+  }
+
+  // ── Clock ──────────────────────────────────────────────────────────────
+
+  function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString("en-US", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── Open full dashboard ────────────────────────────────────────────────
+
+  function openDashboard() {
+    window.open(window.location.origin + "/", "_blank");
+  }
+
+  mini.addEventListener("click", openDashboard);
+
+  // ── Context menu ───────────────────────────────────────────────────────
+
+  mini.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    ctx.style.left = e.clientX + "px";
+    ctx.style.top = e.clientY + "px";
+    ctx.classList.add("open");
+  });
+
+  document.addEventListener("click", () => ctx.classList.remove("open"));
+
+  ctx.querySelectorAll(".ctx-item").forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      ctx.classList.remove("open");
+      const action = item.dataset.action;
+      if (action === "dashboard") openDashboard();
+      else if (action === "theme") {
+        const cur = document.documentElement.getAttribute("data-theme");
+        setTheme(cur === "dark" ? "light" : "dark");
+      }
+      else if (action === "refresh") poll();
+    });
+  });
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────
+
+  document.addEventListener("keydown", (e) => {
+    switch (e.key.toLowerCase()) {
+      case "enter": openDashboard(); break;
+      case "r": poll(); break;
+      case "t": {
+        const cur = document.documentElement.getAttribute("data-theme");
+        setTheme(cur === "dark" ? "light" : "dark");
+        break;
+      }
+    }
+  });
+
+  // ── Server dot elements cache ──────────────────────────────────────────
+
+  let serverOrder = null;
+
+  function renderDots(servers) {
+    if (!serverOrder) {
+      serverOrder = servers.map(s => s.name);
+    }
+    // Add new servers
+    for (const s of servers) {
+      if (!serverOrder.includes(s.name)) serverOrder.push(s.name);
+    }
+
+    const byName = new Map(servers.map(s => [s.name, s]));
+    let html = "";
+    for (const name of serverOrder) {
+      const s = byName.get(name);
+      if (!s) continue;
+      const cls = s.error ? "err" : (s.metrics && s.metrics.length > 0) ? "ok" : "wait";
+      html += `<span class="srv-dot ${cls}" data-name="${name.replace(/"/g, '&quot;')}"></span>`;
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  // ── Polling ────────────────────────────────────────────────────────────
+
+  async function poll() {
+    try {
+      const resp = await fetch("/api/status");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      const servers = data.servers || [];
+      const total = servers.length;
+      const errors = servers.filter(s => !!s.error);
+      const healthy = total - errors.length;
+
+      dot.className = "status-dot";
+
+      if (total === 0) {
+        dot.classList.add("loading");
+        title.textContent = "No Servers";
+        subtitle.textContent = "check configuration";
+      } else if (errors.length === 0) {
+        dot.classList.add("ok");
+        title.textContent = "All Systems OK";
+        subtitle.textContent = `${healthy}/${total} servers healthy`;
+      } else {
+        dot.classList.add("error");
+        const names = errors.map(s => s.name).join(", ");
+        title.textContent = `${errors.length} Down`;
+        subtitle.textContent = names;
+      }
+
+      renderDots(servers);
+    } catch (err) {
+      dot.className = "status-dot error";
+      title.textContent = "Connection Lost";
+      subtitle.textContent = err.message;
+      console.error("Mini poll error:", err);
+    }
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+})();
+</script>
+</body>
+</html>
