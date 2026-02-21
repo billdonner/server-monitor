@@ -213,14 +213,14 @@
   .card-url {
     color: var(--dim);
     font-size: 11px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     padding-left: 18px;
   }
   .card-web-link {
     display: inline-block;
     font-size: 11px;
     padding-left: 18px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .card-web-link a {
     color: var(--accent);
@@ -684,7 +684,7 @@
 
   function sparkline(values) {
     if (!values || values.length === 0) return "";
-    const nums = values.slice(-20).map(Number);
+    const nums = values.slice(-12).map(Number);
     const lo = Math.min(...nums);
     const hi = Math.max(...nums);
     const span = hi !== lo ? hi - lo : 1;
