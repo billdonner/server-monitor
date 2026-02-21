@@ -2,6 +2,8 @@
 
 Monitoring dashboard for heterogeneous servers — custom HTTP services, Redis, and PostgreSQL. Available as both a **terminal TUI** (Textual) and a **browser-based web dashboard** (FastAPI).
 
+**Live:** https://bd-server-monitor.fly.dev
+
 ## Stack
 
 - Python 3.12+, [Textual](https://textual.textualize.io/) (TUI framework)
@@ -35,8 +37,12 @@ The terminal dashboard opens with a 2x2 grid of server cards. The web dashboard 
 
 | Key | Action |
 |-----|--------|
-| `r` | Refresh all servers immediately |
-| `q` | Quit |
+| `Ctrl+P` | Open command palette |
+| `R` | Refresh all servers immediately |
+| `1` / `2` / `3` | Set 1, 2, or 3 column layout |
+| `T` | Toggle dark/light theme |
+| `M` | Mini player mode |
+| `Q` | Quit (TUI only) |
 
 ## Project Structure
 
@@ -53,6 +59,7 @@ The terminal dashboard opens with a 2x2 grid of server cards. The web dashboard 
 | `ui/widgets/server_card.py` | Reactive card widget — waiting/error/healthy render states |
 | `ui/widgets/metric_row.py` | Metric display — label, value, unit, color-coded warnings, sparklines |
 | `static/index.html` | Self-contained web frontend (HTML + CSS + JS, no build step) |
+| `static/help.html` | Usage guide — keyboard shortcuts, metric colors, server table |
 | `METRICS_SPEC.md` | JSON contract for custom server `/metrics` endpoints |
 
 ## Configuration
@@ -67,8 +74,11 @@ Any server that exposes a `GET /metrics` endpoint returning the [METRICS_SPEC.md
 - name: "My API"
   type: http
   metrics_endpoint: "http://127.0.0.1:8000/metrics"
+  web_url: "https://my-api.fly.dev"
   poll_every: 15
 ```
+
+The optional `web_url` field adds a clickable link on the card to the server's web interface.
 
 ### Redis
 
@@ -112,6 +122,7 @@ System metrics: Active Connections (warn > 50), Txn Committed, Txn Rolled Back (
 | `type` | all | yes | `http`, `redis`, or `postgres` |
 | `poll_every` | all | no | Seconds between polls (default: 5) |
 | `metrics_endpoint` | http | yes | Full URL to `GET /metrics` |
+| `web_url` | http | no | Clickable link to the server's web interface |
 | `host` | redis | no | Redis hostname (default: `localhost`) |
 | `port` | redis | no | Redis port (default: `6379`) |
 | `dsn` | postgres | yes | PostgreSQL connection string |
@@ -142,6 +153,10 @@ The web dashboard (`web.py`) provides the same monitoring in your browser:
 - **Dark theme** matching the terminal version — colored status dots, green/red metric values, sparklines
 - **Selectable grid layout** — toolbar buttons for 1, 2, or 3 columns (saved to localStorage)
 - **Auto-refresh** — polls `/api/status` every 3 seconds
+- **Web app links** — clickable URLs to each server's web interface (when `web_url` configured)
+- **Help page** — accessible from toolbar, documents keyboard shortcuts and card indicators
+- **Command palette** — `Ctrl+P` opens a searchable command list
+- **Mini player** — compact status-bar-only popup window
 - **Zero build step** — single self-contained `static/index.html` (no npm/webpack/vite)
 - **Same config** — reads the same `config/servers.yaml` as the terminal version
 
@@ -155,15 +170,40 @@ The web dashboard (`web.py`) provides the same monitoring in your browser:
     {
       "name": "Alities Engine",
       "url": "http://127.0.0.1:9847/metrics",
+      "web_url": "https://bd-alities-engine.fly.dev",
       "poll_every": 15,
       "last_updated": 1708380000.4,
       "metrics": [{"key": "rps", "label": "RPS", "value": 42, "unit": "req/s"}],
       "error": null
     }
   ],
-  "timestamp": 1708380001.2
+  "timestamp": 1708380001.2,
+  "lan_ip": "192.168.1.100"
 }
 ```
+
+## Default Configuration
+
+The included `config/servers.yaml` monitors six servers:
+
+| Server | Type | Port | Poll Interval | Web App |
+|--------|------|------|---------------|---------|
+| Alities Engine | HTTP | 9847 | 15s | https://bd-alities-engine.fly.dev |
+| Nagzerver | HTTP | 9800 | 30s | https://bd-nagzerver.fly.dev |
+| Server Monitor | HTTP | 9860 | 10s | https://bd-server-monitor.fly.dev |
+| Redis | Redis | 6379 | 10s | — |
+| Postgres (Nagz) | Postgres | 5433 | 15s | — |
+| OBO Server | HTTP | 9810 | 15s | https://bd-obo-server.fly.dev |
+
+## Deployment
+
+Deployed to [Fly.io](https://fly.io) via the [Flyz](https://github.com/billdonner/Flyz) infrastructure repo:
+
+```bash
+~/Flyz/scripts/deploy.sh server-monitor
+```
+
+The production config at `~/Flyz/apps/server-monitor/config/servers.yaml` polls Fly.io public URLs instead of localhost.
 
 ## Architecture
 
@@ -206,32 +246,12 @@ Metric values are automatically colored based on thresholds:
 - **Green** — value within normal range
 - **Red** — value exceeds `warn_above` or falls below `warn_below`
 
-## Default Configuration
-
-The included `config/servers.yaml` monitors four servers:
-
-| Server | Type | Port | Poll Interval |
-|--------|------|------|---------------|
-| Alities Engine | HTTP | 9847 | 15s |
-| Nagzerver | HTTP | 9800 | 30s |
-| Redis | Redis | 6379 | 10s |
-| Postgres (Nagz) | Postgres | 5433 | 15s |
-
-## Dependencies
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| textual | >=3.0 | Terminal UI framework |
-| fastapi | >=0.110 | Web dashboard backend |
-| uvicorn | >=0.29 | ASGI server for web dashboard |
-| httpx | >=0.28 | Async HTTP client |
-| redis | >=5.2 | Async Redis client |
-| asyncpg | >=0.30 | Async PostgreSQL driver |
-| pyyaml | >=6.0 | YAML config parser |
-
 ## Related Repos
 
 | Repo | Description |
 |------|-------------|
 | [alities-engine](https://github.com/billdonner/alities-engine) | Swift trivia engine (exposes `/metrics` on port 9847) |
 | [nagzerver](https://github.com/billdonner/nagzerver) | Python API server (exposes `/metrics` on port 9800) |
+| [obo-server](https://github.com/billdonner/obo-server) | OBO flashcard API (exposes `/metrics` on port 9810) |
+| [server-monitor-ios](https://github.com/billdonner/server-monitor-ios) | SwiftUI iOS + WidgetKit companion app |
+| [Flyz](https://github.com/billdonner/Flyz) | Fly.io deployment configs |

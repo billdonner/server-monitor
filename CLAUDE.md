@@ -2,6 +2,8 @@
 
 Flicker-free terminal dashboard for monitoring heterogeneous servers (HTTP, Redis, PostgreSQL) in a 2x2 grid layout.
 
+**Live URL:** https://bd-server-monitor.fly.dev
+
 **Three frontends share the same backend:**
 - Terminal TUI (`monitor.py`) — Textual framework
 - Web dashboard (`web.py`) — FastAPI + static HTML on port 9860
@@ -40,6 +42,7 @@ ui/
     metric_row.py       <- renders label (18-char), value, unit, warn color, sparkline
 static/
   index.html            <- self-contained web frontend (HTML + CSS + JS, no build step)
+  help.html             <- usage guide (keyboard shortcuts, metric colors, server table)
 monitor.py              <- TUI entrypoint, loads YAML config, wires collectors to Textual
 web.py                  <- Web entrypoint, FastAPI + uvicorn, serves API + static frontend
 METRICS_SPEC.md         <- JSON contract for custom server /metrics endpoints
@@ -64,9 +67,11 @@ On failure: `{"metrics": [], "error": "reason"}`. Must never raise.
 
 | Type | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| HTTP | `metrics_endpoint` (URL) | `poll_every` |
+| HTTP | `metrics_endpoint` (URL) | `poll_every`, `web_url` |
 | Redis | — | `host`, `port`, `poll_every` |
 | Postgres | `dsn` | `system_stats`, `queries[]` with per-query `poll_every` |
+
+The `web_url` field adds a clickable link on the server card to the app's web interface.
 
 ## Error Highlighting
 
@@ -86,11 +91,13 @@ All three frontends highlight unreachable servers with red borders:
 
 ## Web Dashboard
 
-- Port **9860** (registered in alities port registry)
+- Port **9860** (registered in port registry)
 - FastAPI backend reuses same collectors and config as TUI
-- Single `GET /api/status` endpoint returns all server snapshots as JSON
+- `GET /api/status` returns all server snapshots as JSON (includes `web_url` per server)
 - Self-contained `static/index.html` — no npm, no build step
-- Dark theme matching terminal version, selectable 1/2/3 column grid layout
+- `static/help.html` — usage guide linked from toolbar
+- Dark/light theme, selectable 1/2/3 column grid layout, command palette (Ctrl+P)
+- Server cards show clickable web app links when `web_url` is configured
 - Frontend polls `/api/status` every 3 seconds
 
 ## Cross-Project Integration
@@ -105,6 +112,11 @@ This dashboard monitors servers from other projects. When those projects change:
 | Redis moves to non-default port | Update `config/servers.yaml` redis host/port |
 | Postgres DSN changes | Update `config/servers.yaml` postgres dsn |
 | OBO database schema changes | Update custom queries in `config/servers.yaml` OBO Decks section |
+
+## Deployment
+- **Live URL:** https://bd-server-monitor.fly.dev
+- Deployed via `~/Flyz/scripts/deploy.sh server-monitor`
+- Production config at `~/Flyz/apps/server-monitor/config/servers.yaml` (polls Fly.io URLs instead of localhost)
 
 ## Documentation
 
