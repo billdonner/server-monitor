@@ -4,10 +4,11 @@ Flicker-free terminal dashboard for monitoring heterogeneous servers (HTTP, Redi
 
 **Live URL:** https://bd-server-monitor.fly.dev
 
-**Three frontends share the same backend:**
+**Four frontends share the same backend:**
 - Terminal TUI (`monitor.py`) — Textual framework
 - Web dashboard (`web.py`) — FastAPI + static HTML on port 9860
-- iOS app (`~/server-monitor-ios`) — SwiftUI + WidgetKit
+- iOS app (`~/server-monitor-ios`) — SwiftUI + WidgetKit (iOS 18.5+)
+- watchOS app (`~/server-monitor-ios`) — SwiftUI + WidgetKit complications (watchOS 10+)
 
 ## Stack
 
