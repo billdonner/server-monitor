@@ -99,6 +99,7 @@ _web_urls: dict[str, str] = {}   # server name → web app URL
 _tasks: list[asyncio.Task] = []
 _start_time: float = time.time()
 _total_polls: int = 0
+_ever_failed: set[str] = set()   # servers that have failed at least once
 
 
 def _get_lan_ip() -> str:
@@ -125,6 +126,9 @@ async def _poll_loop(collector: BaseCollector) -> None:
             result = {"metrics": [], "error": str(exc)}
         global _total_polls
         _total_polls += 1
+        error = result.get("error")
+        if error:
+            _ever_failed.add(collector.name)
         _state[collector.name] = {
             "name": collector.name,
             "url": collector.url,
@@ -132,7 +136,8 @@ async def _poll_loop(collector: BaseCollector) -> None:
             "poll_every": collector.poll_every,
             "last_updated": time.time(),
             "metrics": result.get("metrics", []),
-            "error": result.get("error"),
+            "error": error,
+            "had_error": collector.name in _ever_failed,
         }
         await asyncio.sleep(collector.poll_every)
 
@@ -161,12 +166,22 @@ async def api_status():
     return JSONResponse({"servers": servers, "timestamp": time.time(), "lan_ip": _lan_ip})
 
 
+@app.post("/api/clear-warnings")
+async def clear_warnings():
+    """Clear the sticky 'ever failed' state for all servers."""
+    _ever_failed.clear()
+    for snap in _state.values():
+        snap["had_error"] = False
+    return JSONResponse({"ok": True})
+
+
 @app.get("/metrics")
 async def metrics():
     """Self-monitoring endpoint — METRICS_SPEC.md format."""
     servers = list(_state.values())
     healthy = sum(1 for s in servers if s.get("metrics") and not s.get("error"))
     errored = sum(1 for s in servers if s.get("error"))
+    warned = sum(1 for s in servers if s.get("had_error") and not s.get("error"))
     uptime = int(time.time() - _start_time)
 
     return JSONResponse({
@@ -190,6 +205,13 @@ async def metrics():
                 "value": errored,
                 "unit": "count",
                 "warn_above": 0,
+            },
+            {
+                "key": "servers_warned",
+                "label": "Servers Warned",
+                "value": warned,
+                "unit": "count",
+                "color": "yellow" if warned > 0 else "green",
             },
             {
                 "key": "uptime",

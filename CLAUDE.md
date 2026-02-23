@@ -80,6 +80,18 @@ All three frontends highlight unreachable servers with red borders:
 - **Terminal**: `heavy red` border via `error-state` CSS class
 - **iOS**: 2pt red stroke + shadow overlay on `ServerCardView`
 
+## Sticky Yellow Warning State
+
+When a server fails and later recovers, it enters a "warned" (yellow) state instead of going straight to green. This makes it visible that something went wrong, even after recovery.
+
+- Backend tracks `_ever_failed: set[str]` — servers that have errored at least once
+- Each server snapshot includes `had_error: bool` in the `/api/status` response
+- `POST /api/clear-warnings` clears the sticky state for all servers
+- **Web dashboard**: yellow banner, yellow card border (`card-warning-border`), yellow dot; `C` key or toolbar button to clear
+- **Mini player**: yellow pulse dot, yellow server dots; `C` key or context menu to clear
+- **iOS app**: yellow card border, yellow banner, "Clear" button in header
+- `/metrics` includes `servers_warned` count
+
 ## Key Design Decisions
 
 - **No flicker** — Textual's `reactive` system triggers differential re-renders
@@ -93,7 +105,8 @@ All three frontends highlight unreachable servers with red borders:
 
 - Port **9860** (registered in port registry)
 - FastAPI backend reuses same collectors and config as TUI
-- `GET /api/status` returns all server snapshots as JSON (includes `web_url` per server)
+- `GET /api/status` returns all server snapshots as JSON (includes `web_url`, `had_error` per server)
+- `POST /api/clear-warnings` clears sticky yellow warning state
 - Self-contained `static/index.html` — no npm, no build step
 - `static/help.html` — usage guide linked from toolbar
 - Dark/light theme, selectable 1/2/3 column grid layout, command palette (Ctrl+P)

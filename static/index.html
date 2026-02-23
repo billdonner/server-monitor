@@ -90,6 +90,9 @@
   .header.status-error {
     background: var(--red);
   }
+  .header.status-warning {
+    background: var(--yellow);
+  }
   .header .status-detail {
     font-weight: 400;
     font-size: 12px;
@@ -153,6 +156,14 @@
     background: var(--green);
     color: var(--surface);
   }
+  .toolbar button.warn-btn {
+    border-color: var(--yellow);
+    color: var(--yellow);
+  }
+  .toolbar button.warn-btn:hover {
+    background: var(--yellow);
+    color: var(--surface);
+  }
   .toolbar .status {
     font-size: 11px;
     color: var(--dim);
@@ -185,6 +196,11 @@
     border-width: 2px;
     box-shadow: 0 0 8px rgba(226, 76, 94, 0.3);
   }
+  .card.card-warning-border {
+    border-color: var(--yellow);
+    border-width: 2px;
+    box-shadow: 0 0 8px rgba(226, 194, 82, 0.3);
+  }
   .card-header {
     display: flex;
     align-items: center;
@@ -197,9 +213,10 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot-red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
-  .dot-dim   { background: var(--dim);   opacity: 0.5; }
+  .dot-green  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+  .dot-yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .dot-red    { background: var(--red);    box-shadow: 0 0 6px var(--red); }
+  .dot-dim    { background: var(--dim);    opacity: 0.5; }
   .card-name {
     font-weight: 700;
     font-size: 14px;
@@ -409,6 +426,9 @@
   <div class="group">
     <button class="refresh-btn" id="refresh-btn">Refresh</button>
   </div>
+  <div class="group" id="warn-group" style="display:none">
+    <button class="warn-btn" id="clear-warn-btn">Clear Warnings</button>
+  </div>
   <div class="spacer"></div>
   <div class="group">
     <a href="/help.html" style="color:var(--accent);font-size:12px;text-decoration:none;">Help</a>
@@ -435,6 +455,7 @@
   <div class="binding"><kbd>2</kbd> <span class="binding-label">2 Columns</span></div>
   <div class="binding"><kbd>3</kbd> <span class="binding-label">3 Columns</span></div>
   <div class="binding"><kbd>T</kbd> <span class="binding-label">Toggle Theme</span></div>
+  <div class="binding"><kbd>C</kbd> <span class="binding-label">Clear Warnings</span></div>
   <div class="binding"><kbd>M</kbd> <span class="binding-label">Mini Player</span></div>
 </div>
 
@@ -453,11 +474,18 @@
   const headerEl = document.getElementById("header");
   const headerTitle = document.getElementById("header-title");
   const headerDetail = document.getElementById("header-detail");
+  const warnGroup = document.getElementById("warn-group");
+  const clearWarnBtn = document.getElementById("clear-warn-btn");
 
   // ── Mini Player — opens dedicated page ────────────────────────────────
 
   function openMini() {
     window.open("/mini.html", "sm-mini", "width=480,height=64,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no");
+  }
+
+  async function clearWarnings() {
+    try { await fetch("/api/clear-warnings", { method: "POST" }); } catch {}
+    poll();
   }
 
   // ── Clock (matches Textual Header show_clock=True) ──────────────────────
@@ -519,6 +547,7 @@
     { key: "T",  label: "Toggle Theme",      desc: "Switch between dark and light",
       action: () => { const c = document.documentElement.getAttribute("data-theme"); setTheme(c === "dark" ? "light" : "dark"); }
     },
+    { key: "C",  label: "Clear Warnings",   desc: "Clear recovered-server warnings", action: () => clearWarnings() },
     { key: "M",  label: "Mini Player",      desc: "Open compact status widget", action: () => openMini() },
   ];
 
@@ -605,6 +634,7 @@
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     switch (e.key.toLowerCase()) {
       case "r": poll(); break;
+      case "c": clearWarnings(); break;
       case "m": openMini(); break;
       case "1": setCols("1"); break;
       case "2": setCols("2"); break;
@@ -620,6 +650,7 @@
   // ── Refresh button ──────────────────────────────────────────────────────
 
   refreshBtn.addEventListener("click", () => poll());
+  clearWarnBtn.addEventListener("click", () => clearWarnings());
 
   // ── LAN URL rewriting ──────────────────────────────────────────────────
 
@@ -728,12 +759,18 @@
       return card;
     }
 
-    // State 3: healthy (possibly with warning)
+    // State 3: healthy (possibly with warning or recovered)
+    const isWarned = srv.had_error && !hasError;
     let headerExtra = "";
     if (hasError) {
       card.classList.add("card-error-border");
       headerExtra = `<span style="color:var(--yellow);font-size:12px;margin-left:4px">${escapeHtml(srv.error)}</span>`;
+    } else if (isWarned) {
+      card.classList.add("card-warning-border");
     }
+
+    const dotClass = isWarned ? "dot-yellow" : "dot-green";
+
     let metricsHtml = "";
     for (const m of srv.metrics) {
       const color = computeColor(m);
@@ -751,7 +788,7 @@
 
     card.innerHTML = `
       <div class="card-header">
-        <span class="dot dot-green"></span>
+        <span class="dot ${dotClass}"></span>
         <span class="card-name">${escapeHtml(srv.name)}</span>
         ${headerExtra}
         ${cardMeta(srv)}
@@ -784,25 +821,34 @@
 
       if (data.lan_ip) lanIP = data.lan_ip;
 
-      // Update status banner
+      // Update status banner — three states: red (errors) > yellow (recovered) > green (all OK)
       const errorServers = data.servers.filter(s => !!s.error);
+      const warnedServers = data.servers.filter(s => s.had_error && !s.error);
       const total = data.servers.length;
       const healthy = total - errorServers.length;
 
-      headerEl.classList.remove("status-ok", "status-error");
+      headerEl.classList.remove("status-ok", "status-error", "status-warning");
       if (total === 0) {
         headerTitle.textContent = "Server Monitor";
         headerDetail.textContent = "";
-      } else if (errorServers.length === 0) {
-        headerEl.classList.add("status-ok");
-        headerTitle.textContent = "All Systems OK";
-        headerDetail.textContent = `${healthy}/${total} servers healthy`;
-      } else {
+      } else if (errorServers.length > 0) {
         headerEl.classList.add("status-error");
         const names = errorServers.map(s => s.name).join(", ");
         headerTitle.textContent = `${errorServers.length} Server${errorServers.length > 1 ? "s" : ""} Down`;
         headerDetail.textContent = names;
+      } else if (warnedServers.length > 0) {
+        headerEl.classList.add("status-warning");
+        const names = warnedServers.map(s => s.name).join(", ");
+        headerTitle.textContent = `${warnedServers.length} Server${warnedServers.length > 1 ? "s" : ""} Recovered`;
+        headerDetail.textContent = names;
+      } else {
+        headerEl.classList.add("status-ok");
+        headerTitle.textContent = "All Systems OK";
+        headerDetail.textContent = `${healthy}/${total} servers healthy`;
       }
+
+      // Show/hide Clear Warnings button
+      warnGroup.style.display = warnedServers.length > 0 ? "" : "none";
 
       // Lock the display order on first poll so cards never move
       if (!serverOrder) {

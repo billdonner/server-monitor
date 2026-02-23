@@ -142,6 +142,7 @@
   }
 
   .dot-green { background: var(--green); box-shadow: 0 0 4px var(--green); }
+  .dot-yellow { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); }
   .dot-red { background: var(--red); box-shadow: 0 0 4px var(--red); }
   .dot-dim { background: var(--dim); opacity: 0.5; }
 
@@ -194,6 +195,7 @@
 </p>
 <ul>
   <li><strong style="color:var(--green)">Green</strong> &mdash; All systems healthy</li>
+  <li><strong style="color:var(--yellow)">Yellow</strong> &mdash; One or more servers recovered from a previous error (sticky until cleared with <kbd>C</kbd>)</li>
   <li><strong style="color:var(--red)">Red</strong> &mdash; One or more servers down (names listed in the banner)</li>
   <li><strong style="color:var(--accent)">Blue</strong> &mdash; Initial loading state</li>
 </ul>
@@ -203,6 +205,7 @@
 <ul>
   <li><strong>Status dot</strong> &mdash;
     <span class="dot-demo dot-green"></span> healthy,
+    <span class="dot-demo dot-yellow"></span> recovered (had error),
     <span class="dot-demo dot-red"></span> error,
     <span class="dot-demo dot-dim"></span> waiting for first poll
   </li>
@@ -247,6 +250,7 @@
   <tr><td><kbd>2</kbd></td><td>2-column layout</td></tr>
   <tr><td><kbd>3</kbd></td><td>3-column layout</td></tr>
   <tr><td><kbd>T</kbd></td><td>Toggle dark/light theme</td></tr>
+  <tr><td><kbd>C</kbd></td><td>Clear warning state (yellow &rarr; green)</td></tr>
   <tr><td><kbd>M</kbd></td><td>Open mini player</td></tr>
 </table>
 

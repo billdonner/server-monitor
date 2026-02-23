@@ -89,6 +89,11 @@
     box-shadow: 0 0 8px var(--red);
     animation: pulse-err 1s ease-in-out infinite;
   }
+  .status-dot.warning {
+    background: var(--yellow);
+    box-shadow: 0 0 8px var(--yellow);
+    animation: pulse-warn 1.5s ease-in-out infinite;
+  }
   .status-dot.loading {
     background: var(--dim);
     opacity: 0.5;
@@ -100,6 +105,10 @@
   @keyframes pulse-err {
     0%, 100% { box-shadow: 0 0 6px var(--red); }
     50% { box-shadow: 0 0 16px var(--red); }
+  }
+  @keyframes pulse-warn {
+    0%, 100% { box-shadow: 0 0 6px var(--yellow); }
+    50% { box-shadow: 0 0 14px var(--yellow); }
   }
 
   /* ── Status text ── */
@@ -139,6 +148,7 @@
     transition: background 0.3s ease;
   }
   .srv-dot.ok { background: var(--green); }
+  .srv-dot.warn-recovered { background: var(--yellow); }
   .srv-dot.err { background: var(--red); }
   .srv-dot.wait { background: var(--dim); opacity: 0.4; }
   .srv-dot:hover {
@@ -253,6 +263,7 @@
 <div class="ctx-menu" id="ctx">
   <div class="ctx-item" data-action="dashboard">Open Dashboard <span class="ctx-key">Enter</span></div>
   <div class="ctx-item" data-action="theme">Toggle Theme <span class="ctx-key">T</span></div>
+  <div class="ctx-item" data-action="clear-warnings">Clear Warnings <span class="ctx-key">C</span></div>
   <div class="ctx-item" data-action="refresh">Refresh Now <span class="ctx-key">R</span></div>
 </div>
 
@@ -297,6 +308,11 @@
     window.open(window.location.origin + "/", "_blank");
   }
 
+  async function clearWarnings() {
+    try { await fetch("/api/clear-warnings", { method: "POST" }); } catch {}
+    poll();
+  }
+
   mini.addEventListener("click", openDashboard);
 
   // ── Context menu ───────────────────────────────────────────────────────
@@ -320,6 +336,7 @@
         const cur = document.documentElement.getAttribute("data-theme");
         setTheme(cur === "dark" ? "light" : "dark");
       }
+      else if (action === "clear-warnings") clearWarnings();
       else if (action === "refresh") poll();
     });
   });
@@ -330,6 +347,7 @@
     switch (e.key.toLowerCase()) {
       case "enter": openDashboard(); break;
       case "r": poll(); break;
+      case "c": clearWarnings(); break;
       case "t": {
         const cur = document.documentElement.getAttribute("data-theme");
         setTheme(cur === "dark" ? "light" : "dark");
@@ -356,7 +374,7 @@
     for (const name of serverOrder) {
       const s = byName.get(name);
       if (!s) continue;
-      const cls = s.error ? "err" : (s.metrics && s.metrics.length > 0) ? "ok" : "wait";
+      const cls = s.error ? "err" : (s.had_error && !s.error) ? "warn-recovered" : (s.metrics && s.metrics.length > 0) ? "ok" : "wait";
       html += `<span class="srv-dot ${cls}" data-name="${name.replace(/"/g, '&quot;')}"></span>`;
     }
     dotsEl.innerHTML = html;
@@ -373,6 +391,7 @@
       const servers = data.servers || [];
       const total = servers.length;
       const errors = servers.filter(s => !!s.error);
+      const warned = servers.filter(s => s.had_error && !s.error);
       const healthy = total - errors.length;
 
       dot.className = "status-dot";
@@ -381,15 +400,20 @@
         dot.classList.add("loading");
         title.textContent = "No Servers";
         subtitle.textContent = "check configuration";
-      } else if (errors.length === 0) {
-        dot.classList.add("ok");
-        title.textContent = "All Systems OK";
-        subtitle.textContent = `${healthy}/${total} servers healthy`;
-      } else {
+      } else if (errors.length > 0) {
         dot.classList.add("error");
         const names = errors.map(s => s.name).join(", ");
         title.textContent = `${errors.length} Down`;
         subtitle.textContent = names;
+      } else if (warned.length > 0) {
+        dot.classList.add("warning");
+        const names = warned.map(s => s.name).join(", ");
+        title.textContent = `${warned.length} Recovered`;
+        subtitle.textContent = names;
+      } else {
+        dot.classList.add("ok");
+        title.textContent = "All Systems OK";
+        subtitle.textContent = `${healthy}/${total} servers healthy`;
       }
 
       renderDots(servers);
