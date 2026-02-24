@@ -120,9 +120,9 @@ This dashboard monitors servers from other projects. When those projects change:
 
 | Change | Action |
 |--------|--------|
-| Engine port changes from 9847 | Update `config/servers.yaml` metrics_endpoint URL |
+| card-engine port changes from 9810 | Update `config/servers.yaml` metrics_endpoint URL |
 | Nagzerver port changes from 9800 | Update `config/servers.yaml` metrics_endpoint URL |
-| Engine adds new `/metrics` fields | No action — new metrics auto-display |
+| card-engine adds new `/metrics` fields | No action — new metrics auto-display |
 | Redis moves to non-default port | Update `config/servers.yaml` redis host/port |
 | Postgres DSN changes | Update `config/servers.yaml` postgres dsn |
 | OBO database schema changes | Update custom queries in `config/servers.yaml` OBO Decks section |
