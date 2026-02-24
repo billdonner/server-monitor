@@ -3,11 +3,7 @@
 servers:
   # -- Custom servers (HTTP /metrics endpoint) --
 
-  - name: "Alities Engine"
-    type: http
-    metrics_endpoint: "http://127.0.0.1:9847/metrics"
-    web_url: "https://bd-alities-engine.fly.dev"
-    poll_every: 15
+  # Alities Engine retired — replaced by card-engine ingestion pipeline
 
   - name: "Nagzerver"
     type: http
