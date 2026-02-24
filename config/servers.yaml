@@ -47,6 +47,12 @@ servers:
         warn_above: 10
         poll_every: 60
 
+  - name: "card-engine"
+    type: http
+    metrics_endpoint: "http://127.0.0.1:9810/metrics"
+    web_url: "https://bd-card-engine.fly.dev"
+    poll_every: 15
+
   - name: "OBO Server"
     type: http
     metrics_endpoint: "http://127.0.0.1:9810/metrics"
