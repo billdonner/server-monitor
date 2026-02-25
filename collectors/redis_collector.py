@@ -8,14 +8,19 @@ from .base import BaseCollector
 
 
 class RedisCollector(BaseCollector):
-    def __init__(self, name: str, host: str = "localhost", port: int = 6379, poll_every: int = 10) -> None:
-        super().__init__(name, poll_every, url=f"{host}:{port}")
+    def __init__(self, name: str, host: str = "localhost", port: int = 6379, url: str | None = None, poll_every: int = 10) -> None:
+        display = url or f"{host}:{port}"
+        super().__init__(name, poll_every, url=display)
+        self.redis_url = url
         self.host = host
         self.port = port
 
     async def collect(self) -> dict:
         try:
-            r = aioredis.Redis(host=self.host, port=self.port, decode_responses=True, socket_timeout=3)
+            if self.redis_url:
+                r = aioredis.from_url(self.redis_url, decode_responses=True, socket_timeout=5)
+            else:
+                r = aioredis.Redis(host=self.host, port=self.port, decode_responses=True, socket_timeout=3)
             info = await r.info()
             await r.aclose()
         except Exception as e:

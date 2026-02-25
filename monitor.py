@@ -46,6 +46,7 @@ def load_config(path: Path) -> list[BaseCollector]:
                     name=name,
                     host=srv.get("host", "localhost"),
                     port=srv.get("port", 6379),
+                    url=srv.get("url"),
                     poll_every=poll,
                 )
             )
