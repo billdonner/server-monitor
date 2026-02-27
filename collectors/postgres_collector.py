@@ -47,6 +47,18 @@ class PostgresCollector(BaseCollector):
 
             # -- System stats (pg_stat_*) --
             if self.system_stats:
+                # Database size first
+                db_size = await conn.fetchval(
+                    "SELECT pg_database_size(current_database())"
+                )
+                if db_size:
+                    metrics.append({
+                        "key": "db_size_mb",
+                        "label": "Database Size",
+                        "value": round(db_size / 1_048_576, 1),
+                        "unit": "MB",
+                    })
+
                 db_stats = await conn.fetchrow(
                     """SELECT
                         numbackends,
@@ -106,17 +118,6 @@ class PostgresCollector(BaseCollector):
                         "value": db_stats["temp_files"],
                         "unit": "count",
                         "warn_above": 100,
-                    })
-
-                db_size = await conn.fetchval(
-                    "SELECT pg_database_size(current_database())"
-                )
-                if db_size:
-                    metrics.append({
-                        "key": "db_size_mb",
-                        "label": "Database Size",
-                        "value": round(db_size / 1_048_576, 1),
-                        "unit": "MB",
                     })
 
             # -- Custom YAML queries (with per-query poll_every) --

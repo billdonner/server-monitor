@@ -1,9 +1,7 @@
-# Server Monitor — Dashboard Configuration
+# Server Monitor — Local Development Configuration
 
 servers:
-  # -- Custom servers (HTTP /metrics endpoint) --
-
-  # Alities Engine retired — replaced by cardzerver ingestion pipeline
+  # -- Nagzerver + its database --
 
   - name: "Nagzerver"
     type: http
@@ -11,21 +9,7 @@ servers:
     web_url: "https://bd-nagzerver.fly.dev"
     poll_every: 30
 
-  - name: "Server Monitor"
-    type: http
-    metrics_endpoint: "http://127.0.0.1:9860/metrics"
-    web_url: "https://bd-server-monitor.fly.dev"
-    poll_every: 10
-
-  # -- Standard services (native protocol) --
-
-  - name: "Redis"
-    type: redis
-    host: "localhost"
-    port: 6379
-    poll_every: 10
-
-  - name: "Postgres (Nagz)"
+  - name: "Postgres (Nagzerver)"
     type: postgres
     dsn: "postgresql://nagz:nagz@localhost:5433/nagz"
     system_stats: true
@@ -43,13 +27,29 @@ servers:
         warn_above: 10
         poll_every: 60
 
-  - name: "cardzerver"
+  - name: "Redis (Nagzerver)"
+    type: redis
+    host: "localhost"
+    port: 6379
+    poll_every: 10
+
+  # -- Cardzerver + its database --
+
+  - name: "Cardzerver"
     type: http
     metrics_endpoint: "http://127.0.0.1:9810/metrics"
     web_url: "https://bd-cardzerver.fly.dev"
     poll_every: 15
 
+  # -- Other services --
+
   - name: "Advice App"
     type: http
     metrics_endpoint: "http://127.0.0.1:9820/metrics"
     poll_every: 15
+
+  - name: "Server Monitor"
+    type: http
+    metrics_endpoint: "http://127.0.0.1:9860/metrics"
+    web_url: "https://bd-server-monitor.fly.dev"
+    poll_every: 10

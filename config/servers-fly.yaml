@@ -2,7 +2,7 @@
 # HTTP services via public URLs, databases via Fly internal network
 
 servers:
-  # -- Application servers (HTTP /metrics) --
+  # -- Nagzerver + its database --
 
   - name: "Nagzerver"
     type: http
@@ -10,26 +10,7 @@ servers:
     web_url: "https://bd-nagzerver.fly.dev"
     poll_every: 30
 
-  - name: "cardzerver"
-    type: http
-    metrics_endpoint: "https://bd-cardzerver.fly.dev/metrics"
-    web_url: "https://bd-cardzerver.fly.dev"
-    poll_every: 15
-
-  - name: "Server Monitor"
-    type: http
-    metrics_endpoint: "http://localhost:8080/metrics"
-    web_url: "https://bd-server-monitor.fly.dev"
-    poll_every: 10
-
-  # -- Databases (Fly internal network) --
-
-  - name: "Redis (Nagz)"
-    type: redis
-    url: "redis://default:58b132487e1541e3aa3e478f4bd9e552@fly-nagz-redis.upstash.io:6379"
-    poll_every: 15
-
-  - name: "Postgres (Nagz)"
+  - name: "Postgres (Nagzerver)"
     type: postgres
     dsn: "postgresql://nagz_user:P$$Ba%23@bd-postgres.internal:5432/nagz"
     system_stats: true
@@ -47,7 +28,20 @@ servers:
         warn_above: 10
         poll_every: 60
 
-  - name: "Postgres (cardzerver)"
+  - name: "Redis (Nagzerver)"
+    type: redis
+    url: "redis://default:58b132487e1541e3aa3e478f4bd9e552@fly-nagz-redis.upstash.io:6379"
+    poll_every: 15
+
+  # -- Cardzerver + its database --
+
+  - name: "Cardzerver"
+    type: http
+    metrics_endpoint: "https://bd-cardzerver.fly.dev/metrics"
+    web_url: "https://bd-cardzerver.fly.dev"
+    poll_every: 15
+
+  - name: "Postgres (Cardzerver)"
     type: postgres
     dsn: "postgresql://card_engine_user:P$$Ba%23@bd-postgres.internal:5432/card_engine"
     system_stats: true
@@ -74,3 +68,11 @@ servers:
         color: red
         warn_above: 5
         poll_every: 60
+
+  # -- Server Monitor (self) --
+
+  - name: "Server Monitor"
+    type: http
+    metrics_endpoint: "http://localhost:8080/metrics"
+    web_url: "https://bd-server-monitor.fly.dev"
+    poll_every: 10
