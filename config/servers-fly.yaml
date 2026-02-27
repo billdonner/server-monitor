@@ -1,0 +1,21 @@
+# Server Monitor — Fly.io Configuration
+# Uses public Fly URLs (localhost services not available in cloud)
+
+servers:
+  - name: "Nagzerver"
+    type: http
+    metrics_endpoint: "https://bd-nagzerver.fly.dev/api/v1/metrics"
+    web_url: "https://bd-nagzerver.fly.dev"
+    poll_every: 30
+
+  - name: "card-engine"
+    type: http
+    metrics_endpoint: "https://bd-card-engine.fly.dev/metrics"
+    web_url: "https://bd-card-engine.fly.dev"
+    poll_every: 15
+
+  - name: "Server Monitor"
+    type: http
+    metrics_endpoint: "http://localhost:8080/metrics"
+    web_url: "https://bd-server-monitor.fly.dev"
+    poll_every: 10
