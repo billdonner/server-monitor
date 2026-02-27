@@ -1,7 +1,9 @@
 # Server Monitor — Fly.io Configuration
-# Uses public Fly URLs (localhost services not available in cloud)
+# HTTP services via public URLs, databases via Fly internal network
 
 servers:
+  # -- Application servers (HTTP /metrics) --
+
   - name: "Nagzerver"
     type: http
     metrics_endpoint: "https://bd-nagzerver.fly.dev/api/v1/metrics"
@@ -19,3 +21,56 @@ servers:
     metrics_endpoint: "http://localhost:8080/metrics"
     web_url: "https://bd-server-monitor.fly.dev"
     poll_every: 10
+
+  # -- Databases (Fly internal network) --
+
+  - name: "Redis (Nagz)"
+    type: redis
+    url: "redis://default:58b132487e1541e3aa3e478f4bd9e552@fly-nagz-redis.upstash.io:6379"
+    poll_every: 15
+
+  - name: "Postgres (Nagz)"
+    type: postgres
+    dsn: "postgresql://nagz_user:P$$Ba%23@bd-postgres.internal:5432/nagz"
+    system_stats: true
+    poll_every: 15
+    queries:
+      - label: "Open Nags"
+        sql: "SELECT COUNT(*) as value FROM nags WHERE status = 'open'"
+        color: yellow
+        warn_above: 100
+        poll_every: 30
+
+      - label: "Failed Deliveries"
+        sql: "SELECT COUNT(*) as value FROM deliveries WHERE status = 'failed'"
+        color: red
+        warn_above: 10
+        poll_every: 60
+
+  - name: "Postgres (cardzerver)"
+    type: postgres
+    dsn: "postgresql://card_engine_user:P$$Ba%23@bd-postgres.internal:5432/card_engine"
+    system_stats: true
+    poll_every: 15
+    queries:
+      - label: "Total Decks"
+        sql: "SELECT COUNT(*) as value FROM decks"
+        poll_every: 30
+
+      - label: "Total Cards"
+        sql: "SELECT COUNT(*) as value FROM cards"
+        poll_every: 30
+
+      - label: "Trivia Decks"
+        sql: "SELECT COUNT(*) as value FROM decks WHERE kind = 'trivia'"
+        poll_every: 60
+
+      - label: "Ingestion Runs (24h)"
+        sql: "SELECT COUNT(*) as value FROM source_runs WHERE started_at > now() - interval '24 hours'"
+        poll_every: 60
+
+      - label: "Failed Runs (24h)"
+        sql: "SELECT COUNT(*) as value FROM source_runs WHERE error IS NOT NULL AND started_at > now() - interval '24 hours'"
+        color: red
+        warn_above: 5
+        poll_every: 60
