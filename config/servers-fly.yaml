@@ -8,10 +8,10 @@ servers:
     web_url: "https://bd-nagzerver.fly.dev"
     poll_every: 30
 
-  - name: "card-engine"
+  - name: "cardzerver"
     type: http
-    metrics_endpoint: "https://bd-card-engine.fly.dev/metrics"
-    web_url: "https://bd-card-engine.fly.dev"
+    metrics_endpoint: "https://bd-cardzerver.fly.dev/metrics"
+    web_url: "https://bd-cardzerver.fly.dev"
     poll_every: 15
 
   - name: "Server Monitor"

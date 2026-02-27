@@ -168,9 +168,9 @@ The web dashboard (`web.py`) provides the same monitoring in your browser:
 {
   "servers": [
     {
-      "name": "card-engine",
+      "name": "cardzerver",
       "url": "http://127.0.0.1:9810/metrics",
-      "web_url": "https://bd-card-engine.fly.dev",
+      "web_url": "https://bd-cardzerver.fly.dev",
       "poll_every": 15,
       "last_updated": 1708380000.4,
       "metrics": [{"key": "total_cards", "label": "Total Cards", "value": 105, "unit": "count"}],
@@ -188,7 +188,7 @@ The included `config/servers.yaml` monitors six servers:
 
 | Server | Type | Port | Poll Interval | Web App |
 |--------|------|------|---------------|---------|
-| card-engine | HTTP | 9810 | 15s | https://bd-card-engine.fly.dev |
+| cardzerver | HTTP | 9810 | 15s | https://bd-cardzerver.fly.dev |
 | Nagzerver | HTTP | 9800 | 30s | https://bd-nagzerver.fly.dev |
 | Server Monitor | HTTP | 9860 | 10s | https://bd-server-monitor.fly.dev |
 | Redis | Redis | 6379 | 10s | — |
@@ -250,7 +250,7 @@ Metric values are automatically colored based on thresholds:
 
 | Repo | Description |
 |------|-------------|
-| [card-engine](https://github.com/billdonner/card-engine) | Unified flashcard + trivia backend (exposes `/metrics` on port 9810) |
+| [cardzerver](https://github.com/billdonner/cardzerver) | Unified flashcard + trivia backend (exposes `/metrics` on port 9810) |
 | [nagzerver](https://github.com/billdonner/nagzerver) | Python API server (exposes `/metrics` on port 9800) |
 | [server-monitor-ios](https://github.com/billdonner/server-monitor-ios) | SwiftUI iOS + WidgetKit companion app |
 | [Flyz](https://github.com/billdonner/Flyz) | Fly.io deployment configs |

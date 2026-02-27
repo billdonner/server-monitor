@@ -3,7 +3,7 @@
 servers:
   # -- Custom servers (HTTP /metrics endpoint) --
 
-  # Alities Engine retired — replaced by card-engine ingestion pipeline
+  # Alities Engine retired — replaced by cardzerver ingestion pipeline
 
   - name: "Nagzerver"
     type: http
@@ -43,10 +43,10 @@ servers:
         warn_above: 10
         poll_every: 60
 
-  - name: "card-engine"
+  - name: "cardzerver"
     type: http
     metrics_endpoint: "http://127.0.0.1:9810/metrics"
-    web_url: "https://bd-card-engine.fly.dev"
+    web_url: "https://bd-cardzerver.fly.dev"
     poll_every: 15
 
   - name: "Advice App"
