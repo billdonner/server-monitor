@@ -806,6 +806,8 @@
   const cardElements = new Map();
   // Lock the display order after the first successful poll
   let serverOrder = null;
+  // Prevent concurrent poll() calls from overlapping
+  let polling = false;
 
   function updateCardContent(cardEl, srv) {
     const fresh = renderCard(srv);
@@ -814,6 +816,8 @@
   }
 
   async function poll() {
+    if (polling) return;
+    polling = true;
     try {
       const resp = await fetch("/api/status");
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -850,6 +854,27 @@
       // Show/hide Clear Warnings button
       warnGroup.style.display = warnedServers.length > 0 ? "" : "none";
 
+      const currentNames = new Set(data.servers.map(s => s.name));
+
+      // Remove cards for servers no longer in the API response
+      if (serverOrder) {
+        for (const name of [...serverOrder]) {
+          if (!currentNames.has(name)) {
+            const el = cardElements.get(name);
+            if (el) el.remove();
+            cardElements.delete(name);
+          }
+        }
+        serverOrder = serverOrder.filter(n => currentNames.has(n));
+      }
+
+      // Remove any non-card children (e.g., leftover "No servers" message)
+      for (const child of [...grid.children]) {
+        if (!child.classList.contains("card")) {
+          child.remove();
+        }
+      }
+
       // Lock the display order on first poll so cards never move
       if (!serverOrder) {
         serverOrder = data.servers.map(s => s.name);
@@ -883,6 +908,8 @@
       }
     } catch (err) {
       console.error("Poll error:", err.message);
+    } finally {
+      polling = false;
     }
   }
 
